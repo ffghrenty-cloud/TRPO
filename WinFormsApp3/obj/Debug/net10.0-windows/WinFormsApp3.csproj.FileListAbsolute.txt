@@ -1,0 +1,85 @@
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.exe
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.deps.json
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.runtimeconfig.json
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfoInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfo.cs
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\refint\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.genruntimeconfig.cache
+C:\Users\Lenovo\OneDrive\Desktop\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\ref\WinFormsApp3.dll
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.exe
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.deps.json
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.runtimeconfig.json
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.dll
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.pdb
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.GeneratedMSBuildEditorConfig.editorconfig
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfoInputs.cache
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfo.cs
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.csproj.CoreCompileInputs.cache
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.dll
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\refint\WinFormsApp3.dll
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.pdb
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.genruntimeconfig.cache
+D:\ForCompledLabs\2 семестр\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\ref\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.exe
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.deps.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.runtimeconfig.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfoInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfo.cs
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\refint\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.genruntimeconfig.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3\WinFormsApp3\obj\Debug\net10.0-windows\ref\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.exe
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.deps.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.runtimeconfig.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfoInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfo.cs
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\refint\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.genruntimeconfig.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия\WinFormsApp3\obj\Debug\net10.0-windows\ref\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.exe
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.deps.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.runtimeconfig.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfoInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfo.cs
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\refint\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.genruntimeconfig.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\ref\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.exe
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.deps.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.runtimeconfig.json
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\bin\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfoInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.AssemblyInfo.cs
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\refint\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.pdb
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinFormsApp3.genruntimeconfig.cache
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\ref\WinFormsApp3.dll
+C:\Users\Lenovo\OneDrive\Desktop\трпо\vvvv\WinFormsApp3 — копия — копия — копия\WinFormsApp3\obj\Debug\net10.0-windows\WinForms.D7CF0A35.Up2Date
