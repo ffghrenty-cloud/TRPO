@@ -45,7 +45,7 @@
             <MenuItem Header="_Справка" Click="Help_Click"/>
         </Menu>
         <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,1,0,1" Padding="6">
-            <StackPanel Orientation="Horizontal">
+            <WrapPanel Orientation="Horizontal">
                 <Button Content="＋ Компонент" Click="AddComponent_Click" Background="#DCEBFF"/>
                 <Button Content="━ Дорожка" Click="TrackMode_Click"/>
                 <Button Content="↖ Выбор" Click="SelectMode_Click"/>
@@ -69,7 +69,7 @@
                 <Button Content="Сохранить" Click="SaveProject_Click" Background="#DDF6E7"/>
                 <TextBlock Text="Колесо — прокрутка • Ctrl+колесо — масштаб • средняя кнопка — панорама"
                            VerticalAlignment="Center" Margin="18,0,0,0" Foreground="#65748A" FontSize="12"/>
-            </StackPanel>
+            </WrapPanel>
         </Border>
         <StatusBar DockPanel.Dock="Bottom" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,1,0,0">
             <StatusBarItem><TextBlock x:Name="StatusText" Text="Готово. Добавьте компонент из библиотеки или выберите элемент на плате."/></StatusBarItem>
