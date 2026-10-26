@@ -535,7 +535,7 @@ namespace WpfApp1
             StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
         }
 
-        private static Point SnapComponentCenter(Point mm, PcbComponent component)
+        private Point SnapComponentCenter(Point mm, PcbComponent component)
         {
             double halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 : component.Type == "TP" ? 1.2 : 1.7;
             double halfHeight = component.Type == "U" ? 2.1 : component.Type == "J" ? 1.6 : component.Type == "TP" ? 1.2 : 1.1;
