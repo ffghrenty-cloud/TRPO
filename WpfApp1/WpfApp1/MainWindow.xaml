@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Altium-layout — редактор печатных плат" Height="820" Width="1320"
         MinHeight="650" MinWidth="1000" WindowStartupLocation="CenterScreen"
-        Background="#F3F5F8" FontFamily="Segoe UI">
+        Background="#F3F5F8" FontFamily="Segoe UI" PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="12,7"/>
@@ -26,21 +26,21 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top" Background="#FFFFFF" Padding="5">
             <MenuItem Header="_Файл">
-                <MenuItem Header="Новый проект" Click="NewProject_Click"/>
-                <MenuItem Header="Открыть проект…" Click="OpenProject_Click"/>
-                <MenuItem Header="Сохранить проект" Click="SaveProject_Click"/>
+                <MenuItem Header="Новый проект" InputGestureText="Ctrl+N" Click="NewProject_Click"/>
+                <MenuItem Header="Открыть проект…" InputGestureText="Ctrl+O" Click="OpenProject_Click"/>
+                <MenuItem Header="Сохранить проект" InputGestureText="Ctrl+S" Click="SaveProject_Click"/>
                 <Separator/>
-                <MenuItem Header="Экспорт SVG…" Click="ExportSvg_Click"/>
+                <MenuItem Header="Экспорт SVG…" InputGestureText="Ctrl+E" Click="ExportSvg_Click"/>
                 <Separator/>
                 <MenuItem Header="Выход" Click="Exit_Click"/>
             </MenuItem>
             <MenuItem Header="_Правка">
-                <MenuItem Header="Удалить выбранный элемент" Click="DeleteSelected_Click"/>
+                <MenuItem Header="Удалить выбранный элемент" InputGestureText="Delete" Click="DeleteSelected_Click"/>
                 <MenuItem Header="Проверить правила (DRC)" Click="RunDrc_Click"/>
             </MenuItem>
             <MenuItem Header="_Вид">
-                <MenuItem Header="Уместить плату" Click="FitBoard_Click"/>
-                <MenuItem Header="Показать сетку" IsCheckable="True" IsChecked="True" Click="ToggleGrid_Click"/>
+                <MenuItem Header="Уместить плату / сбросить масштаб" InputGestureText="Ctrl+0" Click="FitBoard_Click"/>
+                <MenuItem Header="Показать сетку" InputGestureText="G" IsCheckable="True" IsChecked="True" Click="ToggleGrid_Click"/>
             </MenuItem>
             <MenuItem Header="_Справка" Click="Help_Click"/>
         </Menu>
@@ -53,7 +53,7 @@
                 <Separator Margin="8,2"/>
                 <Button Content="Проверить DRC" Click="RunDrc_Click" Background="#FFF0D2"/>
                 <Button Content="Сохранить" Click="SaveProject_Click" Background="#DDF6E7"/>
-                <TextBlock Text="Колесо мыши — масштаб • перетаскивание — перемещение компонента"
+                <TextBlock Text="Колесо — прокрутка • Ctrl+колесо — масштаб • средняя кнопка — панорама"
                            VerticalAlignment="Center" Margin="18,0,0,0" Foreground="#65748A" FontSize="12"/>
             </StackPanel>
         </Border>
@@ -100,11 +100,11 @@
                         <TextBlock DockPanel.Dock="Right" Text="FR-4 • 2 слоя • мм" Foreground="#7A8798" FontSize="11" VerticalAlignment="Center"/>
                     </DockPanel>
                 </Border>
-                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer x:Name="BoardScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" CanContentScroll="False" PanningMode="Both">
                     <Canvas x:Name="BoardCanvas" Width="1400" Height="900" Background="#111A28"
                             ClipToBounds="True" MouseLeftButtonDown="BoardCanvas_MouseLeftButtonDown"
                             MouseMove="BoardCanvas_MouseMove" MouseLeftButtonUp="BoardCanvas_MouseLeftButtonUp"
-                            MouseWheel="BoardCanvas_MouseWheel"/>
+                            MouseWheel="BoardCanvas_MouseWheel" MouseDown="BoardCanvas_MouseDown" MouseUp="BoardCanvas_MouseUp"/>
                 </ScrollViewer>
             </Grid>
             <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="1,0,0,0" Padding="14">
