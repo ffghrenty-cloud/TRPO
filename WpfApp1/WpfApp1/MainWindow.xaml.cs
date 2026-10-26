@@ -155,9 +155,11 @@ namespace WpfApp1
                          component.Type == "U" ? new SolidColorBrush(Color.FromRgb(39, 48, 61)) :
                          component.Type == "J" ? new SolidColorBrush(Color.FromRgb(190, 198, 207)) :
                          new SolidColorBrush(Color.FromRgb(229, 192, 72));
+            bool isPlacementPreview = _placingComponent && ReferenceEquals(component, _placementPreview);
             var shape = new Rectangle
             {
                 Width = w, Height = h, RadiusX = component.Type == "TP" ? 12 : 3, RadiusY = component.Type == "TP" ? 12 : 3,
+                Opacity = isPlacementPreview ? 0.65 : 1.0,
                 Fill = body,
                 Stroke = _selected == component ? Brushes.White : new SolidColorBrush(Color.FromRgb(238, 244, 248)),
                 StrokeThickness = _selected == component ? 3 : 1.5,
@@ -356,7 +358,7 @@ namespace WpfApp1
                     _trackPreviewLine.X2 = BoardLeft + mm.X * PixelsPerMm;
                     _trackPreviewLine.Y2 = BoardTop + mm.Y * PixelsPerMm;
                 }
-                else if (!_dragging && !_trackMode)
+                else if (!_dragging && !_trackMode && !_placingComponent)
                     StatusText.Text = string.Format("Координаты курсора: X {0:0.0} мм, Y {1:0.0} мм", mm.X, mm.Y);
             }
         }
