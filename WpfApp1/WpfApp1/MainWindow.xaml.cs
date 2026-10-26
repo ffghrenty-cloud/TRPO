@@ -242,7 +242,8 @@ namespace WpfApp1
 
         private void LibraryList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            AddComponent_Click(sender, new RoutedEventArgs());
+            // Одного выбора компонента достаточно: предпросмотр уже активен.
+            e.Handled = true;
         }
 
         private void BoardCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -470,8 +471,6 @@ namespace WpfApp1
             double bestDistance = 0.8;
             foreach (var component in _project.Components)
             {
-                double halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 :
-                    component.Type == "TP" ? 0 : 1.7;
                 if (component.Type == "U")
                 {
                     for (int i = 0; i < 4; i++)
@@ -480,8 +479,13 @@ namespace WpfApp1
                         ConsiderSnap(mm, RotatePadMm(component, 2.9, -1.2 + i * 0.8), ref best, ref bestDistance);
                     }
                 }
-                else if (component.Type != "TP")
+                else if (component.Type == "TP")
                 {
+                    ConsiderSnap(mm, new Point(component.X, component.Y), ref best, ref bestDistance);
+                }
+                else
+                {
+                    double halfWidth = component.Type == "J" ? 2.4 : 1.7;
                     ConsiderSnap(mm, RotatePadMm(component, -halfWidth, 0), ref best, ref bestDistance);
                     ConsiderSnap(mm, RotatePadMm(component, halfWidth, 0), ref best, ref bestDistance);
                 }
@@ -880,7 +884,8 @@ namespace WpfApp1
 
         private void LibraryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Selection is consumed by AddComponent_Click.
+            if (!IsLoaded || LibraryList.SelectedItem == null) return;
+            AddComponent_Click(sender, new RoutedEventArgs());
         }
 
         private void Help_Click(object sender, RoutedEventArgs e)
