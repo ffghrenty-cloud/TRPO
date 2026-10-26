@@ -417,8 +417,8 @@ namespace WpfApp1
                 {
                     for (int i = 0; i < 4; i++)
                     {
-                        ConsiderSnap(mm, RotatePadMm(component, -2.9, -1.3 + i * 0.8), ref best, ref bestDistance);
-                        ConsiderSnap(mm, RotatePadMm(component, 2.9, -1.3 + i * 0.8), ref best, ref bestDistance);
+                        ConsiderSnap(mm, RotatePadMm(component, -2.9, -1.0 + i * 0.8), ref best, ref bestDistance);
+                        ConsiderSnap(mm, RotatePadMm(component, 2.9, -1.0 + i * 0.8), ref best, ref bestDistance);
                     }
                 }
                 else if (component.Type != "TP")
@@ -629,8 +629,11 @@ namespace WpfApp1
             var issues = new List<string>();
             foreach (var c in _project.Components)
             {
-                if (c.X < 0 || c.X > 100 || c.Y < 0 || c.Y > 60)
-                    issues.Add(c.Reference + ": компонент находится за границами платы.");
+                double halfWidth = c.Type == "U" ? 2.9 : c.Type == "J" ? 2.4 : c.Type == "TP" ? 1.2 : 1.7;
+                double halfHeight = c.Type == "U" ? 2.1 : c.Type == "J" ? 1.6 : c.Type == "TP" ? 1.2 : 1.1;
+                if (c.Rotation % 180 != 0) { double temp = halfWidth; halfWidth = halfHeight; halfHeight = temp; }
+                if (c.X - halfWidth < 0 || c.X + halfWidth > 100 || c.Y - halfHeight < 0 || c.Y + halfHeight > 60)
+                    issues.Add(c.Reference + ": корпус или контактная площадка выходит за границы платы.");
             }
             for (int i = 0; i < _project.Components.Count; i++)
                 for (int j = i + 1; j < _project.Components.Count; j++)
