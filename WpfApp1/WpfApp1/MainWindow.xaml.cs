@@ -27,6 +27,8 @@ namespace WpfApp1
         private double _panHorizontalStart;
         private double _panVerticalStart;
         private bool _trackMode;
+        private bool _placingComponent;
+        private PcbComponent _placementPreview;
         private bool _showGrid = true;
         private Point? _trackStart;
         private Line _trackPreviewLine;
@@ -105,6 +107,9 @@ namespace WpfApp1
 
             foreach (var component in _project.Components)
                 DrawComponent(component);
+
+            if (_placingComponent && _placementPreview != null)
+                DrawComponent(_placementPreview);
 
             if (_trackStart.HasValue)
             {
@@ -212,29 +217,60 @@ namespace WpfApp1
             string type = item == null ? "R" : Convert.ToString(item.Tag);
             string prefix = type == "TP" ? "TP" : type;
             int index = 1;
-            while (_project.Components.Any(c => c.Reference == prefix + index)) index++;
+            while (_project.Components.Any(component => component.Reference == prefix + index)) index++;
+
             int n = _project.Components.Count;
-            var component = new PcbComponent
+            _placementPreview = new PcbComponent
             {
                 Reference = prefix + index,
                 Type = type,
                 Value = type == "R" ? "10k" : type == "C" ? "100nF" : type == "D" ? "LED" : type == "U" ? "IC" : type == "J" ? "CONN" : "Test",
-                X = Math.Round(15.0 + (n % 5) * 15.0, 1),
-                Y = Math.Round(15.0 + (n / 5) * 12.0, 1)
+                X = Math.Min(95, Math.Max(5, 15.0 + (n % 5) * 15.0)),
+                Y = Math.Min(55, Math.Max(5, 15.0 + (n / 5) * 12.0))
             };
-            if (component.Y > 54) component.Y = 54;
-            _project.Components.Add(component);
-            _selected = component;
+            _placingComponent = true;
             _trackMode = false;
             _trackStart = null;
+            _selected = _placementPreview;
             RefreshSelection();
             RedrawBoard();
-            StatusText.Text = "Добавлен компонент " + component.Reference + ". Перетащите его в нужное место.";
+            StatusText.Text = "Размещение " + _placementPreview.Reference + ": переместите курсор и щёлкните, чтобы установить. R — поворот, Esc — отмена.";
+            BoardCanvas.Cursor = Cursors.Cross;
+        }
+
+        private void LibraryList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            AddComponent_Click(sender, new RoutedEventArgs());
         }
 
         private void BoardCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             Point p = e.GetPosition(BoardCanvas);
+            if (_placingComponent && _placementPreview != null)
+            {
+                if (!IsInsideBoard(p))
+                {
+                    StatusText.Text = "Наведите курсор внутрь платы, чтобы разместить компонент.";
+                    return;
+                }
+
+                Point placement = SnapComponentCenter(ToMm(p), _placementPreview);
+                _placementPreview.X = placement.X;
+                _placementPreview.Y = placement.Y;
+                _project.Components.Add(_placementPreview);
+                _selected = _placementPreview;
+                string placedReference = _placementPreview.Reference;
+                _placementPreview = null;
+                _placingComponent = false;
+                BoardCanvas.Cursor = Cursors.Arrow;
+                RefreshSelection();
+                RedrawBoard();
+                StatusText.Text = placedReference + " установлен. Можно перетащить его или добавить следующий компонент.";
+                e.Handled = true;
+                return;
+            }
+
+            Point ignored = p;
             if (_trackMode)
             {
                 if (!IsInsideBoard(p))
@@ -296,11 +332,19 @@ namespace WpfApp1
             }
 
             Point p = e.GetPosition(BoardCanvas);
-            if (_dragging && _selected != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
+            if (_placingComponent && _placementPreview != null && IsInsideBoard(p))
             {
-                Point mm = ToMm(p);
-                _selected.X = Math.Round(mm.X, 1);
-                _selected.Y = Math.Round(mm.Y, 1);
+                Point mm = SnapComponentCenter(ToMm(p), _placementPreview);
+                _placementPreview.X = mm.X;
+                _placementPreview.Y = mm.Y;
+                RefreshSelection();
+                RedrawBoard();
+            }
+            else if (_dragging && _selected != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
+            {
+                Point mm = SnapComponentCenter(ToMm(p), _selected);
+                _selected.X = mm.X;
+                _selected.Y = mm.Y;
                 RefreshSelection();
                 RedrawBoard();
             }
@@ -392,7 +436,20 @@ namespace WpfApp1
                 _trackMode = false;
                 _trackStart = null;
                 _dragging = false;
-                StatusText.Text = "Текущая операция отменена. Режим выбора.";
+                _placingComponent = false;
+                _placementPreview = null;
+                _selected = _project.Components.Contains(_selected) ? _selected : null;
+                BoardCanvas.Cursor = Cursors.Arrow;
+                RefreshSelection();
+                RedrawBoard();
+                StatusText.Text = "Операция отменена. Режим выбора.";
+            }
+            else if (!control && e.Key == Key.R && _placingComponent && _placementPreview != null)
+            {
+                _placementPreview.Rotation = (_placementPreview.Rotation + 90) % 360;
+                RefreshSelection();
+                RedrawBoard();
+                StatusText.Text = "Поворот предпросмотра: " + _placementPreview.Rotation + "°. Щёлкните для установки.";
             }
             else if (!control && !textInputFocused && e.Key == Key.T)
                 TrackMode_Click(this, new RoutedEventArgs());
@@ -476,6 +533,21 @@ namespace WpfApp1
             StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
         }
 
+        private static Point SnapComponentCenter(Point mm, PcbComponent component)
+        {
+            double halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 : component.Type == "TP" ? 1.2 : 1.7;
+            double halfHeight = component.Type == "U" ? 2.1 : component.Type == "J" ? 1.6 : component.Type == "TP" ? 1.2 : 1.1;
+            if (component.Rotation % 180 != 0) { double temp = halfWidth; halfWidth = halfHeight; halfHeight = temp; }
+            double x = Math.Max(halfWidth, Math.Min(100 - halfWidth, mm.X));
+            double y = Math.Max(halfHeight, Math.Min(60 - halfHeight, mm.Y));
+            if (SnapCheck != null && SnapCheck.IsChecked == true)
+            {
+                x = Math.Round(x * 2.0) / 2.0;
+                y = Math.Round(y * 2.0) / 2.0;
+            }
+            return new Point(x, y);
+        }
+
         private static Point ToCanvas(PcbComponent component)
         {
             return new Point(BoardLeft + component.X * PixelsPerMm, BoardTop + component.Y * PixelsPerMm);
@@ -506,17 +578,16 @@ namespace WpfApp1
 
         private void RefreshSelection()
         {
-            if (_selected == null)
-            {
-                SelectedName.Text = "Ничего не выбрано";
-                XBox.Text = "0"; YBox.Text = "0";
-            }
-            else
-            {
-                SelectedName.Text = _selected.Reference + "  ·  " + _selected.Value;
-                XBox.Text = _selected.X.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
-                YBox.Text = _selected.Y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
-            }
+            bool hasSelection = _selected != null;
+            SelectedName.Text = hasSelection ? _selected.Reference + "  ·  " + _selected.Value : "Ничего не выбрано";
+            XBox.Text = hasSelection ? _selected.X.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) : "0";
+            YBox.Text = hasSelection ? _selected.Y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) : "0";
+            ReferenceBox.Text = hasSelection ? _selected.Reference : "";
+            ValueBox.Text = hasSelection ? _selected.Value : "";
+            ReferenceBox.IsEnabled = hasSelection;
+            ValueBox.IsEnabled = hasSelection;
+            XBox.IsEnabled = hasSelection;
+            YBox.IsEnabled = hasSelection;
         }
 
         private void ApplyProperties_Click(object sender, RoutedEventArgs e)
@@ -533,20 +604,41 @@ namespace WpfApp1
                     "Некорректные координаты", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            string reference = ReferenceBox.Text.Trim();
+            string value = ValueBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(reference) || string.IsNullOrWhiteSpace(value))
+            {
+                MessageBox.Show("Заполните обозначение и значение компонента.", "Не хватает данных",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (_project.Components.Any(component => component != _selected &&
+                string.Equals(component.Reference, reference, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("Обозначение " + reference + " уже используется.", "Дубликат обозначения",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             _selected.X = x; _selected.Y = y;
+            _selected.Reference = reference; _selected.Value = value;
+            RefreshSelection();
             RedrawBoard();
-            StatusText.Text = "Координаты " + _selected.Reference + " обновлены.";
+            StatusText.Text = "Свойства " + _selected.Reference + " обновлены.";
         }
 
         private void TrackMode_Click(object sender, RoutedEventArgs e)
         {
-            _trackMode = true; _dragging = false; _trackStart = null;
+            _trackMode = true; _dragging = false; _trackStart = null; _placingComponent = false; _placementPreview = null;
+            BoardCanvas.Cursor = Cursors.Cross;
+            RedrawBoard();
             StatusText.Text = "Режим дорожки: щёлкните начальную, затем конечную точку внутри платы.";
         }
 
         private void SelectMode_Click(object sender, RoutedEventArgs e)
         {
-            _trackMode = false; _trackStart = null;
+            _trackMode = false; _trackStart = null; _placingComponent = false; _placementPreview = null;
+            BoardCanvas.Cursor = Cursors.Arrow;
+            RedrawBoard();
             StatusText.Text = "Режим выбора: щёлкните и перетащите компонент.";
         }
 
@@ -556,6 +648,8 @@ namespace WpfApp1
             string reference = _selected.Reference;
             _project.Components.Remove(_selected);
             _selected = null;
+            _placingComponent = false;
+            _placementPreview = null;
             RefreshSelection();
             RedrawBoard();
             StatusText.Text = "Компонент " + reference + " удалён.";
@@ -572,6 +666,7 @@ namespace WpfApp1
             _project.Name = "Новый проект";
             _project.Components.Clear(); _project.Tracks.Clear();
             _selected = null; _currentFile = null; _trackMode = false; _trackStart = null;
+            _placingComponent = false; _placementPreview = null; BoardCanvas.Cursor = Cursors.Arrow;
             RefreshSelection(); RedrawBoard();
             StatusText.Text = "Создан новый проект.";
         }
@@ -614,6 +709,7 @@ namespace WpfApp1
                 _project.Components = loaded.Components ?? new List<PcbComponent>();
                 _project.Tracks = loaded.Tracks ?? new List<PcbTrack>();
                 _selected = null; _currentFile = dialog.FileName; _trackMode = false; _trackStart = null;
+                _placingComponent = false; _placementPreview = null; BoardCanvas.Cursor = Cursors.Arrow;
                 RefreshSelection(); RedrawBoard();
                 StatusText.Text = "Открыт проект: " + System.IO.Path.GetFileName(dialog.FileName);
             }
