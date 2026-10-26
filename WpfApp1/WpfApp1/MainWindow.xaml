@@ -1,8 +1,8 @@
 ﻿<Window x:Class="WpfApp1.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Altium-layout — редактор печатных плат" Height="820" Width="1320"
-        MinHeight="650" MinWidth="1000" WindowStartupLocation="CenterScreen"
+        Title="PCB Studio — редактор печатных плат" Height="860" Width="1440"
+        MinHeight="680" MinWidth="1100" WindowStartupLocation="CenterScreen"
         Background="#F3F5F8" FontFamily="Segoe UI" PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <Style TargetType="Button">
@@ -46,7 +46,7 @@
         </Menu>
         <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,1,0,1" Padding="6">
             <WrapPanel Orientation="Horizontal">
-                <Button Content="＋ Компонент" Click="AddComponent_Click" Background="#DCEBFF"/>
+                <Button Content="＋ Добавить компонент" Click="AddComponent_Click" Background="#DCEBFF"/>
                 <Button Content="━ Дорожка" Click="TrackMode_Click"/>
                 <Button Content="↖ Выбор" Click="SelectMode_Click"/>
                 <Button Content="↻ Повернуть" Click="RotateSelected_Click"/>
@@ -87,8 +87,8 @@
             <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,0,1,0" Padding="14">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="БИБЛИОТЕКА КОМПОНЕНТОВ" Style="{StaticResource PanelTitle}"/>
-                    <TextBlock DockPanel.Dock="Top" Text="Выберите элемент и нажмите «Добавить»." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
-                    <ListBox x:Name="LibraryList" SelectionChanged="LibraryList_SelectionChanged" BorderBrush="#DCE3EC">
+                    <TextBlock DockPanel.Dock="Top" Text="Выберите корпус. Нажмите «Добавить на плату», затем щёлкните место установки. Двойной щелчок тоже запускает размещение." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
+                    <ListBox x:Name="LibraryList" SelectionChanged="LibraryList_SelectionChanged" MouseDoubleClick="LibraryList_MouseDoubleClick" BorderBrush="#DCE3EC">
                         <ListBoxItem Content="Резистор (R)" Tag="R" IsSelected="True" Padding="8"/>
                         <ListBoxItem Content="Конденсатор (C)" Tag="C" Padding="8"/>
                         <ListBoxItem Content="Светодиод (D)" Tag="D" Padding="8"/>
@@ -128,7 +128,10 @@
                         <TextBlock Text="Выбранный объект" FontSize="11" Foreground="#718096" Margin="0,0,0,6"/>
                         <TextBlock x:Name="SelectedName" Text="Ничего не выбрано" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12"/>
                         <Separator Margin="0,0,0,12"/>
-                        <TextBlock Text="Координаты (мм)" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Обозначение и значение" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <TextBox x:Name="ReferenceBox" ToolTip="Например, R1" Padding="6" Margin="0,0,0,6"/>
+                        <TextBox x:Name="ValueBox" ToolTip="Например, 10k" Padding="6" Margin="0,0,0,10"/>
+                        <TextBlock Text="Положение (мм)" FontWeight="SemiBold" Margin="0,0,0,8"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="0,0,5,0">
@@ -140,7 +143,8 @@
                                 <TextBox x:Name="YBox" Text="0" Padding="6" Margin="0,3,0,8"/>
                             </StackPanel>
                         </Grid>
-                        <Button Content="Применить координаты" Click="ApplyProperties_Click"/>
+                        <Button Content="Применить свойства" Click="ApplyProperties_Click" Background="#DCEBFF"/>
+                        <TextBlock Text="Подсказка: можно перетащить компонент мышью. Во время размещения нажмите R для поворота, Esc — отмена." TextWrapping="Wrap" FontSize="11" Foreground="#718096" Margin="0,8,0,0"/>
                         <Separator Margin="0,12"/>
                         <TextBlock Text="СЛОИ" Style="{StaticResource PanelTitle}" Margin="0,0,0,6"/>
                         <CheckBox x:Name="TopLayerCheck" Content="Верхний слой (Top Copper)" IsChecked="True" Margin="0,5" Checked="LayerVisibility_Changed" Unchecked="LayerVisibility_Changed"/>
