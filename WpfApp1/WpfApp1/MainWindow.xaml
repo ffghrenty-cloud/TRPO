@@ -87,7 +87,7 @@
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="БИБЛИОТЕКА КОМПОНЕНТОВ" Style="{StaticResource PanelTitle}"/>
                     <TextBlock DockPanel.Dock="Top" Text="Выберите компонент в списке, затем щёлкните место на плате. Наведите курсор и щёлкните ещё раз для установки." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
-                    <ListBox x:Name="LibraryList" SelectionChanged="LibraryList_SelectionChanged" MouseDoubleClick="LibraryList_MouseDoubleClick" BorderBrush="#DCE3EC">
+                    <ListBox x:Name="LibraryList" SelectionChanged="LibraryList_SelectionChanged" PreviewMouseLeftButtonDown="LibraryList_PreviewMouseLeftButtonDown" MouseDoubleClick="LibraryList_MouseDoubleClick" BorderBrush="#DCE3EC">
                         <ListBoxItem Content="Резистор (R)" Tag="R" IsSelected="True" Padding="8"/>
                         <ListBoxItem Content="Конденсатор (C)" Tag="C" Padding="8"/>
                         <ListBoxItem Content="Светодиод (D)" Tag="D" Padding="8"/>
