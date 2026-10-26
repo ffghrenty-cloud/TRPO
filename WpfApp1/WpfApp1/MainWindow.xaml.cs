@@ -29,6 +29,7 @@ namespace WpfApp1
         private bool _trackMode;
         private bool _showGrid = true;
         private Point? _trackStart;
+        private Line _trackPreviewLine;
         private double _zoom = 1.0;
         private string _currentFile;
 
@@ -105,6 +106,22 @@ namespace WpfApp1
             foreach (var component in _project.Components)
                 DrawComponent(component);
 
+            if (_trackStart.HasValue)
+            {
+                _trackPreviewLine = new Line
+                {
+                    X1 = BoardLeft + _trackStart.Value.X * PixelsPerMm,
+                    Y1 = BoardTop + _trackStart.Value.Y * PixelsPerMm,
+                    X2 = BoardLeft + _trackStart.Value.X * PixelsPerMm,
+                    Y2 = BoardTop + _trackStart.Value.Y * PixelsPerMm,
+                    Stroke = new SolidColorBrush(Color.FromArgb(210, 255, 231, 125)),
+                    StrokeThickness = 3,
+                    StrokeDashArray = new DoubleCollection { 3, 2 },
+                    IsHitTestVisible = false
+                };
+                BoardCanvas.Children.Add(_trackPreviewLine);
+            }
+
             UpdateStatus();
         }
 
@@ -142,30 +159,44 @@ namespace WpfApp1
                 IsHitTestVisible = false
             };
             if (component.Type == "TP") shape.RadiusX = shape.RadiusY = 12;
+            shape.RenderTransformOrigin = new Point(0.5, 0.5);
+            shape.RenderTransform = new RotateTransform(component.Rotation);
             Canvas.SetLeft(shape, x - w / 2); Canvas.SetTop(shape, y - h / 2); BoardCanvas.Children.Add(shape);
 
             if (component.Type == "U")
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    AddPad(x - w / 2 - 3, y - 13 + i * 8);
-                    AddPad(x + w / 2 - 3, y - 13 + i * 8);
+                    AddRotatedPad(component, x - w / 2 - 3, y - 13 + i * 8, x, y);
+                    AddRotatedPad(component, x + w / 2 - 3, y - 13 + i * 8, x, y);
                 }
             }
             else if (component.Type != "TP")
             {
-                AddPad(x - w / 2 - 3, y - 3);
-                AddPad(x + w / 2 - 3, y - 3);
+                AddRotatedPad(component, x - w / 2 - 3, y - 3, x, y);
+                AddRotatedPad(component, x + w / 2 - 3, y - 3, x, y);
             }
             if (IsChecked(SilkLayerCheck))
             {
                 var label = new TextBlock { Text = component.Reference, FontSize = 11, FontWeight = FontWeights.Bold,
                     Foreground = Brushes.White, IsHitTestVisible = false };
+                label.RenderTransformOrigin = new Point(0.5, 0.5);
+                label.RenderTransform = new RotateTransform(component.Rotation);
                 Canvas.SetLeft(label, x - w / 2); Canvas.SetTop(label, y + h / 2 + 3); BoardCanvas.Children.Add(label);
                 var value = new TextBlock { Text = component.Value, FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(192, 211, 202)), IsHitTestVisible = false };
+                    Foreground = new SolidColorBrush(Color.FromRgb(192, 211, 202)), IsHitTestVisible = false,
+                    RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new RotateTransform(component.Rotation) };
                 Canvas.SetLeft(value, x - w / 2); Canvas.SetTop(value, y + h / 2 + 16); BoardCanvas.Children.Add(value);
             }
+        }
+
+        private void AddRotatedPad(PcbComponent component, double x, double y, double cx, double cy)
+        {
+            double radians = component.Rotation * Math.PI / 180.0;
+            double dx = x + 3 - cx, dy = y + 3 - cy;
+            double rx = dx * Math.Cos(radians) - dy * Math.Sin(radians);
+            double ry = dx * Math.Sin(radians) + dy * Math.Cos(radians);
+            AddPad(cx + rx - 3, cy + ry - 3);
         }
 
         private void AddPad(double x, double y)
@@ -211,19 +242,26 @@ namespace WpfApp1
                     StatusText.Text = "Начало и конец дорожки должны находиться внутри платы.";
                     return;
                 }
-                Point mm = ToMm(p);
+                Point mm = SnapPoint(ToMm(p));
                 if (_trackStart == null)
                 {
                     _trackStart = mm;
-                    StatusText.Text = "Начальная точка задана. Щёлкните конечную точку дорожки.";
+                    RedrawBoard();
+                    StatusText.Text = string.Format("Начало трассы: X {0:0.00}, Y {1:0.00} мм. Щёлкните конечную точку.", mm.X, mm.Y);
                 }
                 else
                 {
                     if (Distance(_trackStart.Value, mm) > 0.1)
                     {
-                        _project.Tracks.Add(new PcbTrack { X1 = _trackStart.Value.X, Y1 = _trackStart.Value.Y,
-                            X2 = mm.X, Y2 = mm.Y, Width = 0.35, Layer = IsChecked(BottomLayerCheck) && !IsChecked(TopLayerCheck) ? "Bottom" : "Top" });
-                        StatusText.Text = "Дорожка добавлена.";
+                        _project.Tracks.Add(new PcbTrack
+                        {
+                            X1 = _trackStart.Value.X, Y1 = _trackStart.Value.Y,
+                            X2 = mm.X, Y2 = mm.Y,
+                            Width = GetSelectedTrackWidth(),
+                            Layer = GetSelectedTrackLayer()
+                        });
+                        StatusText.Text = "Дорожка добавлена (" + GetSelectedTrackWidth().ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) +
+                            " мм, " + GetSelectedTrackLayer() + "). Можно прокладывать следующую.";
                     }
                     _trackStart = null;
                     RedrawBoard();
@@ -268,8 +306,13 @@ namespace WpfApp1
             }
             if (IsInsideBoard(p))
             {
-                Point mm = ToMm(p);
-                if (!_dragging && !_trackMode)
+                Point mm = SnapPoint(ToMm(p));
+                if (_trackMode && _trackStart.HasValue && _trackPreviewLine != null)
+                {
+                    _trackPreviewLine.X2 = BoardLeft + mm.X * PixelsPerMm;
+                    _trackPreviewLine.Y2 = BoardTop + mm.Y * PixelsPerMm;
+                }
+                else if (!_dragging && !_trackMode)
                     StatusText.Text = string.Format("Координаты курсора: X {0:0.0} мм, Y {1:0.0} мм", mm.X, mm.Y);
             }
         }
@@ -358,6 +401,79 @@ namespace WpfApp1
             else return;
 
             e.Handled = true;
+        }
+
+        private Point SnapPoint(Point mm)
+        {
+            if (SnapCheck == null || SnapCheck.IsChecked != true) return mm;
+
+            Point best = mm;
+            double bestDistance = 0.8;
+            foreach (var component in _project.Components)
+            {
+                double halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 :
+                    component.Type == "TP" ? 0 : 1.7;
+                if (component.Type == "U")
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        ConsiderSnap(mm, RotatePadMm(component, -2.9, -1.3 + i * 0.8), ref best, ref bestDistance);
+                        ConsiderSnap(mm, RotatePadMm(component, 2.9, -1.3 + i * 0.8), ref best, ref bestDistance);
+                    }
+                }
+                else if (component.Type != "TP")
+                {
+                    ConsiderSnap(mm, RotatePadMm(component, -halfWidth, 0), ref best, ref bestDistance);
+                    ConsiderSnap(mm, RotatePadMm(component, halfWidth, 0), ref best, ref bestDistance);
+                }
+            }
+
+            if (bestDistance < 0.8) return best;
+            return new Point(Math.Round(mm.X * 2.0) / 2.0, Math.Round(mm.Y * 2.0) / 2.0);
+        }
+
+        private static Point RotatePadMm(PcbComponent component, double dx, double dy)
+        {
+            double radians = component.Rotation * Math.PI / 180.0;
+            return new Point(component.X + dx * Math.Cos(radians) - dy * Math.Sin(radians),
+                component.Y + dx * Math.Sin(radians) + dy * Math.Cos(radians));
+        }
+
+        private static void ConsiderSnap(Point source, Point target, ref Point best, ref double bestDistance)
+        {
+            double distance = Distance(source, target);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = target;
+            }
+        }
+
+        private double GetSelectedTrackWidth()
+        {
+            var item = TrackWidthComboBox == null ? null : TrackWidthComboBox.SelectedItem as ComboBoxItem;
+            double width;
+            return item != null && double.TryParse(Convert.ToString(item.Tag), System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out width) ? width : 0.35;
+        }
+
+        private string GetSelectedTrackLayer()
+        {
+            var item = TrackLayerComboBox == null ? null : TrackLayerComboBox.SelectedItem as ComboBoxItem;
+            return item == null ? "Top" : Convert.ToString(item.Tag);
+        }
+
+        private void RotateSelected_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selected == null)
+            {
+                StatusText.Text = "Сначала выберите компонент для поворота.";
+                return;
+            }
+
+            _selected.Rotation = (_selected.Rotation + 90) % 360;
+            RedrawBoard();
+            StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
         }
 
         private static Point ToCanvas(PcbComponent component)
@@ -520,16 +636,34 @@ namespace WpfApp1
                 for (int j = i + 1; j < _project.Components.Count; j++)
                 {
                     var a = _project.Components[i]; var b = _project.Components[j];
-                    double required = (a.Type == "U" || b.Type == "U") ? 5.0 : 3.0;
-                    if (Distance(new Point(a.X, a.Y), new Point(b.X, b.Y)) < required)
-                        issues.Add(a.Reference + " и " + b.Reference + ": возможное пересечение корпусов.");
+                    double aw = a.Type == "U" ? 5.8 : a.Type == "J" ? 4.8 : a.Type == "TP" ? 2.4 : 3.4;
+                    double ah = a.Type == "U" ? 4.2 : a.Type == "J" ? 3.2 : a.Type == "TP" ? 2.4 : 2.2;
+                    double bw = b.Type == "U" ? 5.8 : b.Type == "J" ? 4.8 : b.Type == "TP" ? 2.4 : 3.4;
+                    double bh = b.Type == "U" ? 4.2 : b.Type == "J" ? 3.2 : b.Type == "TP" ? 2.4 : 2.2;
+                    if (a.Rotation % 180 != 0) { double temp = aw; aw = ah; ah = temp; }
+                    if (b.Rotation % 180 != 0) { double temp = bw; bw = bh; bh = temp; }
+                    if (Math.Abs(a.X - b.X) < (aw + bw) / 2.0 && Math.Abs(a.Y - b.Y) < (ah + bh) / 2.0)
+                        issues.Add(a.Reference + " и " + b.Reference + ": корпуса перекрываются.");
                 }
-            foreach (var t in _project.Tracks)
+            for (int i = 0; i < _project.Tracks.Count; i++)
             {
-                if (t.Width < 0.25) issues.Add("Дорожка: ширина меньше минимальных 0,25 мм.");
+                var t = _project.Tracks[i];
+                if (t.Width < 0.25) issues.Add("Дорожка " + (i + 1) + ": ширина меньше минимальных 0,25 мм.");
                 if (t.X1 < 0 || t.X1 > 100 || t.X2 < 0 || t.X2 > 100 ||
                     t.Y1 < 0 || t.Y1 > 60 || t.Y2 < 0 || t.Y2 > 60)
-                    issues.Add("Дорожка: точка находится за границами платы.");
+                    issues.Add("Дорожка " + (i + 1) + ": точка находится за границами платы.");
+                if (Distance(new Point(t.X1, t.Y1), new Point(t.X2, t.Y2)) < 0.1)
+                    issues.Add("Дорожка " + (i + 1) + ": нулевая или слишком малая длина.");
+                for (int j = i + 1; j < _project.Tracks.Count; j++)
+                {
+                    var other = _project.Tracks[j];
+                    if (t.Layer != other.Layer) continue;
+                    double gap = SegmentDistance(t, other) - (t.Width + other.Width) / 2.0;
+                    if (gap < 0.20 && !SegmentsShareEndpoint(t, other))
+                        issues.Add("Дорожки " + (i + 1) + " и " + (j + 1) + ": зазор " +
+                            Math.Max(0, gap).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) +
+                            " мм меньше 0,20 мм.");
+                }
             }
             if (issues.Count == 0)
             {
@@ -545,6 +679,45 @@ namespace WpfApp1
                     "Результаты DRC", MessageBoxButton.OK, MessageBoxImage.Warning);
                 StatusText.Text = "DRC: замечаний — " + issues.Count + ".";
             }
+        }
+
+        private static bool SegmentsShareEndpoint(PcbTrack a, PcbTrack b)
+        {
+            const double epsilon = 0.05;
+            return Distance(new Point(a.X1, a.Y1), new Point(b.X1, b.Y1)) < epsilon ||
+                   Distance(new Point(a.X1, a.Y1), new Point(b.X2, b.Y2)) < epsilon ||
+                   Distance(new Point(a.X2, a.Y2), new Point(b.X1, b.Y1)) < epsilon ||
+                   Distance(new Point(a.X2, a.Y2), new Point(b.X2, b.Y2)) < epsilon;
+        }
+
+        private static double SegmentDistance(PcbTrack a, PcbTrack b)
+        {
+            if (SegmentsIntersect(a, b)) return 0;
+            return Math.Min(Math.Min(PointSegmentDistance(a.X1, a.Y1, b), PointSegmentDistance(a.X2, a.Y2, b)),
+                Math.Min(PointSegmentDistance(b.X1, b.Y1, a), PointSegmentDistance(b.X2, b.Y2, a)));
+        }
+
+        private static double PointSegmentDistance(double x, double y, PcbTrack t)
+        {
+            double dx = t.X2 - t.X1, dy = t.Y2 - t.Y1;
+            double lengthSquared = dx * dx + dy * dy;
+            if (lengthSquared < 1e-9) return Distance(new Point(x, y), new Point(t.X1, t.Y1));
+            double u = Math.Max(0, Math.Min(1, ((x - t.X1) * dx + (y - t.Y1) * dy) / lengthSquared));
+            return Distance(new Point(x, y), new Point(t.X1 + u * dx, t.Y1 + u * dy));
+        }
+
+        private static bool SegmentsIntersect(PcbTrack a, PcbTrack b)
+        {
+            double o1 = Orientation(a.X1, a.Y1, a.X2, a.Y2, b.X1, b.Y1);
+            double o2 = Orientation(a.X1, a.Y1, a.X2, a.Y2, b.X2, b.Y2);
+            double o3 = Orientation(b.X1, b.Y1, b.X2, b.Y2, a.X1, a.Y1);
+            double o4 = Orientation(b.X1, b.Y1, b.X2, b.Y2, a.X2, a.Y2);
+            return o1 * o2 < 0 && o3 * o4 < 0;
+        }
+
+        private static double Orientation(double ax, double ay, double bx, double by, double cx, double cy)
+        {
+            return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
         }
 
         private void ExportSvg_Click(object sender, RoutedEventArgs e)
@@ -651,7 +824,8 @@ namespace WpfApp1
         public string Value { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
-        public PcbComponent() { }
+        public int Rotation { get; set; }
+        public PcbComponent() { Rotation = 0; }
     }
 
     public class PcbTrack
