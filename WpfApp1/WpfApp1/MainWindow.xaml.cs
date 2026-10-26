@@ -415,7 +415,7 @@ namespace WpfApp1
                 _project.Tracks = loaded.Tracks ?? new List<PcbTrack>();
                 _selected = null; _currentFile = dialog.FileName; _trackMode = false; _trackStart = null;
                 RefreshSelection(); RedrawBoard();
-                StatusText.Text = "Открыт проект: " + Path.GetFileName(dialog.FileName);
+                StatusText.Text = "Открыт проект: " + System.IO.Path.GetFileName(dialog.FileName);
             }
             catch (Exception ex)
             {
@@ -491,7 +491,7 @@ namespace WpfApp1
                     }
                     writer.WriteLine("</svg>");
                 }
-                StatusText.Text = "SVG экспортирован: " + Path.GetFileName(dialog.FileName);
+                StatusText.Text = "SVG экспортирован: " + System.IO.Path.GetFileName(dialog.FileName);
             }
             catch (Exception ex)
             {
