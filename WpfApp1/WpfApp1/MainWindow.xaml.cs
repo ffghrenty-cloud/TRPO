@@ -245,6 +245,14 @@ namespace WpfApp1
 
         private void BoardCanvas_MouseMove(object sender, MouseEventArgs e)
         {
+            if (_panning && e.MiddleButton == MouseButtonState.Pressed)
+            {
+                Point current = e.GetPosition(BoardScrollViewer);
+                BoardScrollViewer.ScrollToHorizontalOffset(_panHorizontalStart + _panStart.X - current.X);
+                BoardScrollViewer.ScrollToVerticalOffset(_panVerticalStart + _panStart.Y - current.Y);
+                return;
+            }
+
             Point p = e.GetPosition(BoardCanvas);
             if (_dragging && _selected != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
             {
