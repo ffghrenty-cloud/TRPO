@@ -16,3 +16,10 @@ jobs:
         uses: microsoft/setup-msbuild@v2
       - name: Build .NET Framework 4.8 WPF project
         run: msbuild WpfApp1/WpfApp1/WpfApp1.csproj /m /p:Configuration=Release /verbosity:minimal
+      - name: Upload compiled application
+        uses: actions/upload-artifact@v4
+        with:
+          name: Altium-layout-Windows-build
+          path: WpfApp1/WpfApp1/bin/Release/*
+          if-no-files-found: error
+          retention-days: 14
