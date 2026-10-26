@@ -298,8 +298,7 @@ namespace WpfApp1
             if (Math.Abs(newZoom - _zoom) < 0.001) return;
 
             _zoom = newZoom;
-            BoardCanvas.RenderTransform = new ScaleTransform(_zoom, _zoom);
-            BoardCanvas.RenderTransformOrigin = new Point(0, 0);
+            BoardCanvas.LayoutTransform = new ScaleTransform(_zoom, _zoom);
             ZoomText.Text = "Масштаб: " + Math.Round(_zoom * 100) + "%";
             e.Handled = true;
         }
