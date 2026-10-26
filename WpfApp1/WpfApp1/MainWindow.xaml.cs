@@ -21,7 +21,11 @@ namespace WpfApp1
         private const double PixelsPerMm = 10;
         private readonly PcbProject _project = new PcbProject();
         private PcbComponent _selected;
-        private bool _dragging;\n        private bool _panning;\n        private Point _panStart;\n        private double _panHorizontalStart;\n        private double _panVerticalStart;
+        private bool _dragging;
+        private bool _panning;
+        private Point _panStart;
+        private double _panHorizontalStart;
+        private double _panVerticalStart;
         private bool _trackMode;
         private bool _showGrid = true;
         private Point? _trackStart;
@@ -279,7 +283,15 @@ namespace WpfApp1
         // Обычное колесо прокручивает рабочую область; Ctrl+колесо меняет масштаб.
         private void BoardCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0)
+            {
+                if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0)
+                {
+                    BoardScrollViewer.ScrollToHorizontalOffset(BoardScrollViewer.HorizontalOffset - e.Delta);
+                    e.Handled = true;
+                }
+                return;
+            }
 
             double factor = e.Delta > 0 ? 1.1 : 1.0 / 1.1;
             double newZoom = Math.Max(0.4, Math.Min(3.0, _zoom * factor));
@@ -576,7 +588,7 @@ namespace WpfApp1
         private void FitBoard_Click(object sender, RoutedEventArgs e)
         {
             _zoom = 1.0;
-            BoardCanvas.RenderTransform = new ScaleTransform(1, 1);
+            BoardCanvas.LayoutTransform = new ScaleTransform(1, 1);
             ZoomText.Text = "Масштаб: 100%";
             StatusText.Text = "Масштаб сброшен.";
         }
