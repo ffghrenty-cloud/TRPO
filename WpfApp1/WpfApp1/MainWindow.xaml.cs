@@ -161,8 +161,9 @@ namespace WpfApp1
                 Width = w, Height = h, RadiusX = component.Type == "TP" ? 12 : 3, RadiusY = component.Type == "TP" ? 12 : 3,
                 Opacity = isPlacementPreview ? 0.65 : 1.0,
                 Fill = body,
-                Stroke = _selected == component ? Brushes.White : new SolidColorBrush(Color.FromRgb(238, 244, 248)),
-                StrokeThickness = _selected == component ? 3 : 1.5,
+                Stroke = isPlacementPreview ? new SolidColorBrush(Color.FromRgb(95, 240, 255)) : (_selected == component ? Brushes.White : new SolidColorBrush(Color.FromRgb(238, 244, 248))),
+                StrokeThickness = isPlacementPreview ? 2.5 : (_selected == component ? 3 : 1.5),
+                StrokeDashArray = isPlacementPreview ? new DoubleCollection { 3, 2 } : null,
                 IsHitTestVisible = false
             };
             if (component.Type == "TP") shape.RadiusX = shape.RadiusY = 12;
