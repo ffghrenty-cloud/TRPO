@@ -21,7 +21,7 @@ namespace WpfApp1
         private const double PixelsPerMm = 10;
         private readonly PcbProject _project = new PcbProject();
         private PcbComponent _selected;
-        private bool _dragging;
+        private bool _dragging;\n        private bool _panning;\n        private Point _panStart;\n        private double _panHorizontalStart;\n        private double _panVerticalStart;
         private bool _trackMode;
         private bool _showGrid = true;
         private Point? _trackStart;
@@ -268,12 +268,77 @@ namespace WpfApp1
             BoardCanvas.ReleaseMouseCapture();
         }
 
+        // Обычное колесо прокручивает рабочую область; Ctrl+колесо меняет масштаб.
         private void BoardCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            _zoom = Math.Max(0.5, Math.Min(2.0, _zoom + (e.Delta > 0 ? 0.1 : -0.1)));
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+
+            double factor = e.Delta > 0 ? 1.1 : 1.0 / 1.1;
+            double newZoom = Math.Max(0.4, Math.Min(3.0, _zoom * factor));
+            if (Math.Abs(newZoom - _zoom) < 0.001) return;
+
+            _zoom = newZoom;
             BoardCanvas.RenderTransform = new ScaleTransform(_zoom, _zoom);
             BoardCanvas.RenderTransformOrigin = new Point(0, 0);
             ZoomText.Text = "Масштаб: " + Math.Round(_zoom * 100) + "%";
+            e.Handled = true;
+        }
+
+        // Средняя кнопка мыши позволяет перетаскивать рабочую область.
+        private void BoardCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Middle) return;
+
+            _panning = true;
+            _panStart = e.GetPosition(BoardScrollViewer);
+            _panHorizontalStart = BoardScrollViewer.HorizontalOffset;
+            _panVerticalStart = BoardScrollViewer.VerticalOffset;
+            BoardCanvas.CaptureMouse();
+            BoardCanvas.Cursor = Cursors.SizeAll;
+            e.Handled = true;
+        }
+
+        private void BoardCanvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Middle || !_panning) return;
+
+            _panning = false;
+            BoardCanvas.ReleaseMouseCapture();
+            BoardCanvas.Cursor = Cursors.Arrow;
+            e.Handled = true;
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            bool control = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+            bool textInputFocused = Keyboard.FocusedElement is TextBoxBase;
+
+            if (control && e.Key == Key.S) SaveProject_Click(this, new RoutedEventArgs());
+            else if (control && e.Key == Key.O) OpenProject_Click(this, new RoutedEventArgs());
+            else if (control && e.Key == Key.N) NewProject_Click(this, new RoutedEventArgs());
+            else if (control && e.Key == Key.E) ExportSvg_Click(this, new RoutedEventArgs());
+            else if (control && e.Key == Key.D0) FitBoard_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && e.Key == Key.Delete) DeleteSelected_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && e.Key == Key.G)
+            {
+                _showGrid = !_showGrid;
+                RedrawBoard();
+                StatusText.Text = _showGrid ? "Сетка включена." : "Сетка выключена.";
+            }
+            else if (e.Key == Key.Escape)
+            {
+                _trackMode = false;
+                _trackStart = null;
+                _dragging = false;
+                StatusText.Text = "Текущая операция отменена. Режим выбора.";
+            }
+            else if (!control && !textInputFocused && e.Key == Key.T)
+                TrackMode_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && e.Key == Key.V)
+                SelectMode_Click(this, new RoutedEventArgs());
+            else return;
+
+            e.Handled = true;
         }
 
         private static Point ToCanvas(PcbComponent component)
