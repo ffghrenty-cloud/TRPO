@@ -330,7 +330,7 @@ namespace WpfApp1
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             bool control = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
-            bool textInputFocused = Keyboard.FocusedElement is TextBoxBase;
+            bool textInputFocused = Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
 
             if (control && e.Key == Key.S) SaveProject_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.O) OpenProject_Click(this, new RoutedEventArgs());
