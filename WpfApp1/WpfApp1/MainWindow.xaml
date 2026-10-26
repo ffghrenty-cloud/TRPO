@@ -46,7 +46,6 @@
         </Menu>
         <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,1,0,1" Padding="6">
             <WrapPanel Orientation="Horizontal">
-                <Button Content="＋ Добавить компонент" Click="AddComponent_Click" Background="#DCEBFF"/>
                 <Button Content="━ Дорожка" Click="TrackMode_Click"/>
                 <Button Content="↖ Выбор" Click="SelectMode_Click"/>
                 <Button Content="↻ Повернуть" Click="RotateSelected_Click"/>
@@ -87,7 +86,7 @@
             <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,0,1,0" Padding="14">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="БИБЛИОТЕКА КОМПОНЕНТОВ" Style="{StaticResource PanelTitle}"/>
-                    <TextBlock DockPanel.Dock="Top" Text="Выберите корпус. Нажмите «Добавить на плату», затем щёлкните место установки. Двойной щелчок тоже запускает размещение." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
+                    <TextBlock DockPanel.Dock="Top" Text="Выберите компонент в списке, затем щёлкните место на плате. Наведите курсор и щёлкните ещё раз для установки." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
                     <ListBox x:Name="LibraryList" SelectionChanged="LibraryList_SelectionChanged" MouseDoubleClick="LibraryList_MouseDoubleClick" BorderBrush="#DCE3EC">
                         <ListBoxItem Content="Резистор (R)" Tag="R" IsSelected="True" Padding="8"/>
                         <ListBoxItem Content="Конденсатор (C)" Tag="C" Padding="8"/>
@@ -97,9 +96,8 @@
                         <ListBoxItem Content="Тестовая точка (TP)" Tag="TP" Padding="8"/>
                     </ListBox>
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                        <Button Content="＋ Добавить на плату" Click="AddComponent_Click" Background="#2463EB" Foreground="White" BorderBrush="#2463EB" Padding="8,11"/>
                         <TextBlock Text="СОВЕТ" FontWeight="Bold" FontSize="10" Foreground="#6B7B90" Margin="2,12,0,4"/>
-                        <TextBlock Text="Перетаскивайте компоненты. При прокладке дорожки используйте привязку к контактам и сетке; Esc отменяет текущую трассу." TextWrapping="Wrap" FontSize="11" Foreground="#718096"/>
+                        <TextBlock Text="Выберите тип компонента — его предпросмотр появится сразу. При трассировке щёлкайте по контактным площадкам; Esc отменяет трассу." TextWrapping="Wrap" FontSize="11" Foreground="#718096"/>
                     </StackPanel>
                 </DockPanel>
             </Border>
