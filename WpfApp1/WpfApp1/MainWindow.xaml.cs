@@ -257,6 +257,32 @@ namespace WpfApp1
             e.Handled = true;
         }
 
+        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left) return;
+
+            // Handle board clicks at the window level: canvas children are recreated
+            // during preview movement, so their hit-test surface must not own placement.
+            DependencyObject source = e.OriginalSource as DependencyObject;
+            bool insideBoardCanvas = false;
+            while (source != null)
+            {
+                if (ReferenceEquals(source, BoardCanvas))
+                {
+                    insideBoardCanvas = true;
+                    break;
+                }
+
+                if (source is Visual || source is System.Windows.Media.Media3D.Visual3D)
+                    source = VisualTreeHelper.GetParent(source);
+                else
+                    source = LogicalTreeHelper.GetParent(source);
+            }
+
+            if (insideBoardCanvas)
+                BoardCanvas_MouseLeftButtonDown(sender, e);
+        }
+
         private void BoardCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             Point p = e.GetPosition(BoardCanvas);
