@@ -240,9 +240,19 @@ namespace WpfApp1
             BoardCanvas.Cursor = Cursors.Cross;
         }
 
+        private void LibraryList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var item = ItemsControl.ContainerFromElement(LibraryList, e.OriginalSource as DependencyObject) as ListBoxItem;
+            if (item != null && ReferenceEquals(item, LibraryList.SelectedItem))
+            {
+                AddComponent_Click(sender, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
         private void LibraryList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            // Одного выбора компонента достаточно: предпросмотр уже активен.
+            // Не запускаем второе размещение от двойного щелчка.
             e.Handled = true;
         }
 
