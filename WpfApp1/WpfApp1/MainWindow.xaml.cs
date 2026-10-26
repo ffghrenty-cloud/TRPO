@@ -184,8 +184,8 @@ namespace WpfApp1
                 Reference = prefix + index,
                 Type = type,
                 Value = type == "R" ? "10k" : type == "C" ? "100nF" : type == "D" ? "LED" : type == "U" ? "IC" : type == "J" ? "CONN" : "Test",
-                X = Math.Round(15 + (n % 5) * 15, 1),
-                Y = Math.Round(15 + (n / 5) * 12, 1)
+                X = Math.Round(15.0 + (n % 5) * 15.0, 1),
+                Y = Math.Round(15.0 + (n / 5) * 12.0, 1)
             };
             if (component.Y > 54) component.Y = 54;
             _project.Components.Add(component);
@@ -391,7 +391,7 @@ namespace WpfApp1
                 var serializer = new XmlSerializer(typeof(PcbProject));
                 using (var stream = File.Create(path)) serializer.Serialize(stream, _project);
                 _currentFile = path;
-                StatusText.Text = "Проект сохранён: " + Path.GetFileName(path);
+                StatusText.Text = "Проект сохранён: " + System.IO.Path.GetFileName(path);
             }
             catch (Exception ex)
             {
