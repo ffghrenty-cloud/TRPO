@@ -29,6 +29,8 @@ namespace WpfApp1
         private bool _trackMode;
         private bool _placingComponent;
         private PcbComponent _placementPreview;
+        private bool _placingHole;
+        private Point? _holePreviewPoint;
         private bool _showGrid = true;
         private Point? _trackStart;
         private Line _trackPreviewLine;
@@ -110,6 +112,12 @@ namespace WpfApp1
                 BoardCanvas.Children.Add(line);
             }
 
+            foreach (var hole in _project.Holes ?? new List<PcbHole>())
+                DrawHole(hole.X, hole.Y, hole.Diameter, false);
+
+            if (_placingHole && _holePreviewPoint.HasValue)
+                DrawHole(_holePreviewPoint.Value.X, _holePreviewPoint.Value.Y, 3.2, true);
+
             foreach (var component in _project.Components)
                 DrawComponent(component);
 
@@ -146,6 +154,61 @@ namespace WpfApp1
             var label = new TextBlock { Text = text, FontSize = size, FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(color), IsHitTestVisible = false };
             Canvas.SetLeft(label, x); Canvas.SetTop(label, y); BoardCanvas.Children.Add(label);
+        }
+
+        private void DrawHole(double xMm, double yMm, double diameterMm, bool preview)
+        {
+            double diameter = Math.Max(1.0, diameterMm * PixelsPerMm);
+            double cx = BoardLeft + xMm * PixelsPerMm;
+            double cy = BoardTop + yMm * PixelsPerMm;
+            var ring = new Ellipse
+            {
+                Width = diameter + 8, Height = diameter + 8,
+                Fill = new SolidColorBrush(Color.FromArgb(preview ? (byte)80 : (byte)255, 220, 171, 74)),
+                Stroke = preview ? Brushes.White : new SolidColorBrush(Color.FromRgb(255, 210, 112)),
+                StrokeThickness = 1.5, IsHitTestVisible = false
+            };
+            Canvas.SetLeft(ring, cx - (diameter + 8) / 2);
+            Canvas.SetTop(ring, cy - (diameter + 8) / 2);
+            BoardCanvas.Children.Add(ring);
+            var bore = new Ellipse
+            {
+                Width = diameter, Height = diameter,
+                Fill = new SolidColorBrush(Color.FromRgb(17, 26, 40)),
+                Stroke = new SolidColorBrush(Color.FromRgb(8, 12, 18)), StrokeThickness = 1,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(bore, cx - diameter / 2);
+            Canvas.SetTop(bore, cy - diameter / 2);
+            BoardCanvas.Children.Add(bore);
+            BoardCanvas.Children.Add(new Line { X1 = cx - diameter / 2 - 4, X2 = cx + diameter / 2 + 4,
+                Y1 = cy, Y2 = cy, Stroke = Brushes.White, StrokeThickness = 0.7, IsHitTestVisible = false });
+            BoardCanvas.Children.Add(new Line { X1 = cx, X2 = cx,
+                Y1 = cy - diameter / 2 - 4, Y2 = cy + diameter / 2 + 4,
+                Stroke = Brushes.White, StrokeThickness = 0.7, IsHitTestVisible = false });
+            if (!preview)
+            {
+                var label = new TextBlock { Text = diameterMm.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " mm",
+                    FontSize = 9, Foreground = Brushes.White, IsHitTestVisible = false };
+                Canvas.SetLeft(label, cx + diameter / 2 + 5);
+                Canvas.SetTop(label, cy - 7);
+                BoardCanvas.Children.Add(label);
+            }
+        }
+
+        private void AddMountingHole_Click(object sender, RoutedEventArgs e)
+        {
+            _placingHole = true;
+            _holePreviewPoint = null;
+            _placingComponent = false;
+            _placementPreview = null;
+            _trackMode = false;
+            _trackStart = null;
+            _selected = null;
+            BoardCanvas.Cursor = Cursors.Cross;
+            RefreshSelection();
+            RedrawBoard();
+            StatusText.Text = "Монтажное отверстие Ø3,2 мм: щёлкните внутри платы для установки; Esc — отмена.";
         }
 
         private void DrawComponent(PcbComponent component)
@@ -291,6 +354,29 @@ namespace WpfApp1
         private void BoardCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             Point p = e.GetPosition(BoardCanvas);
+            if (_placingHole)
+            {
+                if (!IsInsideBoard(p))
+                {
+                    StatusText.Text = "Монтажное отверстие должно находиться внутри платы.";
+                    e.Handled = true;
+                    return;
+                }
+                Point mm = SnapPoint(ToMm(p));
+                mm.X = Math.Max(2, Math.Min(98, mm.X));
+                mm.Y = Math.Max(2, Math.Min(58, mm.Y));
+                PushUndoSnapshot();
+                if (_project.Holes == null) _project.Holes = new List<PcbHole>();
+                _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = 3.2 });
+                _placingHole = false;
+                _holePreviewPoint = null;
+                BoardCanvas.Cursor = Cursors.Arrow;
+                RedrawBoard();
+                StatusText.Text = string.Format("Монтажное отверстие Ø3,2 мм установлено: X {0:0.0}, Y {1:0.0} мм.", mm.X, mm.Y);
+                e.Handled = true;
+                return;
+            }
+
             if (_placingComponent && _placementPreview != null)
             {
                 if (!IsInsideBoard(p))
@@ -380,7 +466,15 @@ namespace WpfApp1
             }
 
             Point p = e.GetPosition(BoardCanvas);
-            if (_placingComponent && _placementPreview != null && IsInsideBoard(p))
+            if (_placingHole && IsInsideBoard(p))
+            {
+                Point mm = SnapPoint(ToMm(p));
+                mm.X = Math.Max(2, Math.Min(98, mm.X));
+                mm.Y = Math.Max(2, Math.Min(58, mm.Y));
+                _holePreviewPoint = mm;
+                RedrawBoard();
+            }
+            else if (_placingComponent && _placementPreview != null && IsInsideBoard(p))
             {
                 Point mm = SnapComponentCenter(ToMm(p), _placementPreview);
                 _placementPreview.X = mm.X;
@@ -534,6 +628,8 @@ namespace WpfApp1
                 ReferenceBox.SelectAll();
                 StatusText.Text = "Редактирование свойств компонента. Изменения примените кнопкой свойств; Esc отменяет размещение.";
             }
+            else if (!control && !textInputFocused && e.Key == Key.H)
+                AddMountingHole_Click(this, new RoutedEventArgs());
             else if (!control && !textInputFocused && (e.Key == Key.T))
                 TrackMode_Click(this, new RoutedEventArgs());
             else if (!control && !textInputFocused && (e.Key == Key.V || e.Key == Key.S))
@@ -567,6 +663,8 @@ namespace WpfApp1
                 _dragging = false;
                 _placingComponent = false;
                 _placementPreview = null;
+                _placingHole = false;
+                _holePreviewPoint = null;
                 _selected = _project.Components.Contains(_selected) ? _selected : null;
                 BoardCanvas.Cursor = Cursors.Arrow;
                 RefreshSelection();
@@ -616,6 +714,7 @@ namespace WpfApp1
                 _project.Name = restored.Name;
                 _project.Components = restored.Components ?? new List<PcbComponent>();
                 _project.Tracks = restored.Tracks ?? new List<PcbTrack>();
+                _project.Holes = restored.Holes ?? new List<PcbHole>();
             }
             _selected = null;
             _placingComponent = false;
@@ -962,7 +1061,7 @@ namespace WpfApp1
 
         private void NewProject_Click(object sender, RoutedEventArgs e)
         {
-            if (_project.Components.Count > 0 || _project.Tracks.Count > 0)
+            if (_project.Components.Count > 0 || _project.Tracks.Count > 0 || (_project.Holes != null && _project.Holes.Count > 0))
             {
                 var answer = MessageBox.Show("Создать новый проект? Несохранённые изменения будут потеряны.",
                     "Новый проект", MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -971,7 +1070,7 @@ namespace WpfApp1
             _project.Name = "Новый проект";
             _project.Components.Clear(); _project.Tracks.Clear();
             _selected = null; _currentFile = null; _trackMode = false; _trackStart = null;
-            _placingComponent = false; _placementPreview = null; BoardCanvas.Cursor = Cursors.Arrow;
+            _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow;
             RefreshSelection(); RedrawBoard();
             StatusText.Text = "Создан новый проект.";
         }
@@ -1134,6 +1233,12 @@ namespace WpfApp1
                 {
                     writer.WriteLine("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1000\" height=\"600\" viewBox=\"0 0 1000 600\">");
                     writer.WriteLine("<rect width=\"1000\" height=\"600\" fill=\"#1f5b46\" stroke=\"#61b28b\" stroke-width=\"2\"/>");
+                    foreach (var hole in _project.Holes ?? new List<PcbHole>())
+                    {
+                        writer.WriteLine(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                            "<circle cx=\"{0}\" cy=\"{1}\" r=\"{2}\" fill=\"#111a28\" stroke=\"#ffcf70\" stroke-width=\"2\"/>",
+                            hole.X * 10, hole.Y * 10, hole.Diameter * 5));
+                    }
                     foreach (var t in _project.Tracks)
                     {
                         string color = t.Layer == "Bottom" ? "#469aff" : "#f4704f";
@@ -1200,12 +1305,21 @@ namespace WpfApp1
 
         private void Help_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Altium-layout — учебный прототип редактора печатных плат.\n\n" +
-                "• Добавление и перемещение компонентов\n• Прокладка прямых дорожек в два клика\n" +
-                "• Переключение видимости слоёв\n• Сохранение/открытие XML-проекта\n" +
-                "• Базовые проверки DRC и экспорт SVG\n\n" +
-                "Проверка DRC носит учебный характер и не заменяет профессиональную проверку PCB.",
-                "О программе", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("PCB Studio — справка по горячим клавишам\n\n" +
+                "Размещение и редактирование:\n" +
+                "• Выберите компонент слева, наведите курсор на плату и щёлкните ЛКМ один раз.\n" +
+                "• R — повернуть на 90°, Shift+R — повернуть на -90°. Esc — отмена действия.\n" +
+                "• H — режим монтажного отверстия Ø3,2 мм; щёлкните по плате для установки.\n" +
+                "• T — трассировка дорожки (два щелчка), V или S — выбор.\n" +
+                "• Delete — удалить; Ctrl+D — дублировать; Ctrl+C/X/V — копировать/вырезать/вставить.\n" +
+                "• Ctrl+Z / Ctrl+Y — отмена/повтор поддерживаемых изменений; стрелки — сдвиг компонента.\n\n" +
+                "Вид и сетка:\n" +
+                "• Колесо — масштаб; Shift+колесо — горизонтальная прокрутка; средняя кнопка — панорама.\n" +
+                "• F или Space — уместить плату; + / - — масштаб; G — сетка.\n" +
+                "• Shift+G — шаг сетки; Ctrl+G — привязка к сетке; C — поиск компонента.\n\n" +
+                "Файлы: Ctrl+N — новый; Ctrl+O — открыть; Ctrl+S — сохранить; Ctrl+E или Ctrl+P — экспорт SVG.\n\n" +
+                "Это учебный прототип. DRC и трассировка не заменяют профессиональную проверку PCB.",
+                "Справка PCB Studio", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e) { Close(); }
@@ -1225,12 +1339,23 @@ namespace WpfApp1
         public List<PcbComponent> Components { get; set; }
         [XmlArrayItem("Track")]
         public List<PcbTrack> Tracks { get; set; }
+        [XmlArrayItem("Hole")]
+        public List<PcbHole> Holes { get; set; }
         public PcbProject()
         {
             Name = "Новый проект";
             Components = new List<PcbComponent>();
             Tracks = new List<PcbTrack>();
+            Holes = new List<PcbHole>();
         }
+    }
+
+    public class PcbHole
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Diameter { get; set; }
+        public PcbHole() { Diameter = 3.2; }
     }
 
     public class PcbComponent
