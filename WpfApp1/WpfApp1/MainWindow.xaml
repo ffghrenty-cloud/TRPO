@@ -35,6 +35,14 @@
                 <MenuItem Header="Выход" Click="Exit_Click"/>
             </MenuItem>
             <MenuItem Header="_Правка">
+                <MenuItem Header="Отменить" InputGestureText="Ctrl+Z" Click="Undo_Click"/>
+                <MenuItem Header="Повторить" InputGestureText="Ctrl+Y" Click="Redo_Click"/>
+                <Separator/>
+                <MenuItem Header="Копировать компонент" InputGestureText="Ctrl+C" Click="Copy_Click"/>
+                <MenuItem Header="Вырезать компонент" InputGestureText="Ctrl+X" Click="Cut_Click"/>
+                <MenuItem Header="Вставить компонент" InputGestureText="Ctrl+V" Click="Paste_Click"/>
+                <MenuItem Header="Дублировать компонент" InputGestureText="Ctrl+D" Click="DuplicateSelected_Click"/>
+                <Separator/>
                 <MenuItem Header="Удалить выбранный элемент" InputGestureText="Delete" Click="DeleteSelected_Click"/>
                 <MenuItem Header="Проверить правила (DRC)" Click="RunDrc_Click"/>
             </MenuItem>
@@ -42,7 +50,7 @@
                 <MenuItem Header="Уместить плату / сбросить масштаб" InputGestureText="Ctrl+0" Click="FitBoard_Click"/>
                 <MenuItem Header="Показать сетку" InputGestureText="G" IsCheckable="True" IsChecked="True" Click="ToggleGrid_Click"/>
             </MenuItem>
-            <MenuItem Header="_Справка" Click="Help_Click"/>
+            <MenuItem Header="_Справка (F1)" Click="Help_Click"/>
         </Menu>
         <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,1,0,1" Padding="6">
             <WrapPanel Orientation="Horizontal">
