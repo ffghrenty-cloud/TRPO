@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="PCB Studio — редактор печатных плат" Height="860" Width="1440"
         MinHeight="680" MinWidth="1100" WindowStartupLocation="CenterScreen"
-        Background="#F3F5F8" FontFamily="Segoe UI" PreviewKeyDown="Window_PreviewKeyDown" PreviewMouseDown="Window_PreviewMouseDown">
+        Background="#F3F5F8" FontFamily="Segoe UI" PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="12,7"/>
@@ -49,6 +49,7 @@
                 <Button Content="━ Дорожка" Click="TrackMode_Click"/>
                 <Button Content="↖ Выбор" Click="SelectMode_Click"/>
                 <Button Content="↻ Повернуть" Click="RotateSelected_Click"/>
+                <Button Content="⊙ Монтажное отверстие" Click="AddMountingHole_Click" ToolTip="Добавить отверстие Ø3,2 мм (H)"/>
                 <Button Content="⌫ Удалить" Click="DeleteSelected_Click"/>
                 <TextBlock Text="Ширина:" VerticalAlignment="Center" Margin="8,0,2,0"/>
                 <ComboBox x:Name="TrackWidthComboBox" Width="74" SelectedIndex="1" VerticalContentAlignment="Center" Margin="2">
@@ -86,7 +87,7 @@
             <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#DCE3EC" BorderThickness="0,0,1,0" Padding="14">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="БИБЛИОТЕКА КОМПОНЕНТОВ" Style="{StaticResource PanelTitle}"/>
-                    <TextBlock DockPanel.Dock="Top" Text="Выберите компонент в списке, затем щёлкните место на плате. Наведите курсор и щёлкните ещё раз для установки." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
+                    <TextBlock DockPanel.Dock="Top" Text="Выберите компонент в списке, наведите курсор на плату и щёлкните ЛКМ один раз для установки." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,0,0,12"/>
                     <TextBox x:Name="LibrarySearchBox" DockPanel.Dock="Top" Margin="0,0,0,8" Padding="7" ToolTip="Поиск по имени, обозначению или типу компонента" TextChanged="LibrarySearchBox_TextChanged" KeyDown="LibrarySearchBox_KeyDown"/>
                     <ListBox x:Name="LibraryList" SelectionChanged="LibraryList_SelectionChanged" PreviewMouseLeftButtonDown="LibraryList_PreviewMouseLeftButtonDown" MouseDoubleClick="LibraryList_MouseDoubleClick" BorderBrush="#DCE3EC">
                         <ListBoxItem Content="Резистор (R)" Tag="R" IsSelected="True" Padding="8"/>
@@ -116,7 +117,7 @@
                 <ScrollViewer x:Name="BoardScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" CanContentScroll="False" PanningMode="Both">
                     <Canvas x:Name="BoardCanvas" Width="1400" Height="900" Background="#111A28"
                             ClipToBounds="True"
-                            MouseMove="BoardCanvas_MouseMove" MouseLeftButtonUp="BoardCanvas_MouseLeftButtonUp"
+                            MouseLeftButtonDown="BoardCanvas_MouseLeftButtonDown" MouseMove="BoardCanvas_MouseMove" MouseLeftButtonUp="BoardCanvas_MouseLeftButtonUp"
                             MouseWheel="BoardCanvas_MouseWheel" MouseDown="BoardCanvas_MouseDown" MouseUp="BoardCanvas_MouseUp"/>
                 </ScrollViewer>
             </Grid>
