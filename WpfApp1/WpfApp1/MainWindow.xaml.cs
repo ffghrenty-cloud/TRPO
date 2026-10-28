@@ -592,7 +592,7 @@ namespace WpfApp1
             _undoStack.Push(CaptureProject());
             while (_undoStack.Count > 50)
             {
-                var retained = _undoStack.Reverse().Take(50).ToArray();
+                var retained = _undoStack.Take(50).Reverse().ToArray();
                 _undoStack.Clear();
                 foreach (var snapshot in retained) _undoStack.Push(snapshot);
             }
@@ -914,6 +914,7 @@ namespace WpfApp1
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            PushUndoSnapshot();
             _selected.X = x; _selected.Y = y;
             _selected.Reference = reference; _selected.Value = value;
             RefreshSelection();
