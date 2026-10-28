@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="PCB Studio — редактор печатных плат" Height="860" Width="1440"
         MinHeight="680" MinWidth="1100" WindowStartupLocation="CenterScreen"
-        Background="#F3F5F8" FontFamily="Segoe UI" PreviewKeyDown="Window_PreviewKeyDown">
+        Background="#F3F5F8" FontFamily="Segoe UI" PreviewKeyDown="Window_PreviewKeyDown" PreviewMouseDown="Window_PreviewMouseDown">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="12,7"/>
@@ -125,7 +125,7 @@
                 <ScrollViewer x:Name="BoardScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" CanContentScroll="False" PanningMode="Both">
                     <Canvas x:Name="BoardCanvas" Width="1400" Height="900" Background="#111A28"
                             ClipToBounds="True"
-                            MouseLeftButtonDown="BoardCanvas_MouseLeftButtonDown" MouseMove="BoardCanvas_MouseMove" MouseLeftButtonUp="BoardCanvas_MouseLeftButtonUp"
+                            MouseMove="BoardCanvas_MouseMove" MouseLeftButtonUp="BoardCanvas_MouseLeftButtonUp"
                             MouseWheel="BoardCanvas_MouseWheel" MouseDown="BoardCanvas_MouseDown" MouseUp="BoardCanvas_MouseUp"/>
                 </ScrollViewer>
             </Grid>
