@@ -329,7 +329,8 @@ namespace WpfApp1
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
-            if (!_placingComponent && !_placingHole) return;
+            // Route every left click on the board through the central handler.
+            // Track drawing and selection use this same path when no preview is active.
             if (!BoardCanvas.IsMouseOver) return;
 
             Point p = e.GetPosition(BoardCanvas);
