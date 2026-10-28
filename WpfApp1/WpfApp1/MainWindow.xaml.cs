@@ -325,33 +325,15 @@ namespace WpfApp1
             e.Handled = true;
         }
 
-        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        // PreviewMouseDown fires before hit-testing is consumed by canvas children.
+        // Handle the click on the Canvas itself so placement works on the board,
+        // grid lines, labels, and empty canvas area through the same code path.
+        private void BoardCanvas_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
 
-            // Handle board clicks at the window level: canvas children are recreated
-            // during preview movement, so their hit-test surface must not own placement.
-            DependencyObject source = e.OriginalSource as DependencyObject;
-            bool insideBoardCanvas = false;
-            while (source != null)
-            {
-                if (ReferenceEquals(source, BoardCanvas))
-                {
-                    insideBoardCanvas = true;
-                    break;
-                }
-
-                if (source is Visual || source is System.Windows.Media.Media3D.Visual3D)
-                    source = VisualTreeHelper.GetParent(source);
-                else
-                    source = LogicalTreeHelper.GetParent(source);
-            }
-
-            if (insideBoardCanvas)
-            {
-                BoardCanvas_MouseLeftButtonDown(sender, e);
-                e.Handled = true;
-            }
+            BoardCanvas_MouseLeftButtonDown(BoardCanvas, e);
+            e.Handled = true;
         }
 
         private void BoardCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -814,7 +796,6 @@ namespace WpfApp1
                 Rotation = _selected.Rotation
             };
             PushUndoSnapshot();
-            PushUndoSnapshot();
             _project.Components.Add(copy);
             _selected = copy;
             RefreshSelection();
@@ -1116,8 +1097,9 @@ namespace WpfApp1
                 _project.Name = loaded.Name ?? "Проект";
                 _project.Components = loaded.Components ?? new List<PcbComponent>();
                 _project.Tracks = loaded.Tracks ?? new List<PcbTrack>();
+                _project.Holes = loaded.Holes ?? new List<PcbHole>();
                 _selected = null; _currentFile = dialog.FileName; _trackMode = false; _trackStart = null;
-                _placingComponent = false; _placementPreview = null; BoardCanvas.Cursor = Cursors.Arrow;
+                _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow;
                 RefreshSelection(); RedrawBoard();
                 StatusText.Text = "Открыт проект: " + System.IO.Path.GetFileName(dialog.FileName);
             }
