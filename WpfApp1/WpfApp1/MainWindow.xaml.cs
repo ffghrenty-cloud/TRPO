@@ -202,6 +202,8 @@ namespace WpfApp1
             _holePreviewPoint = null;
             _placingComponent = false;
             _placementPreview = null;
+            _placingHole = false;
+            _holePreviewPoint = null;
             _trackMode = false;
             _trackStart = null;
             _selected = null;
@@ -300,29 +302,16 @@ namespace WpfApp1
                 Y = Math.Min(55, Math.Max(5, 15.0 + (n / 5) * 12.0))
             };
             _placingComponent = true;
+            _placingHole = false;
+            _holePreviewPoint = null;
             _trackMode = false;
             _trackStart = null;
+            _dragging = false;
             _selected = _placementPreview;
             RefreshSelection();
             RedrawBoard();
             StatusText.Text = "Размещение " + _placementPreview.Reference + ": переместите курсор и щёлкните, чтобы установить. R — поворот, Esc — отмена.";
             BoardCanvas.Cursor = Cursors.Cross;
-        }
-
-        private void LibraryList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            var item = ItemsControl.ContainerFromElement(LibraryList, e.OriginalSource as DependencyObject) as ListBoxItem;
-            if (item != null && ReferenceEquals(item, LibraryList.SelectedItem))
-            {
-                AddComponent_Click(sender, new RoutedEventArgs());
-                e.Handled = true;
-            }
-        }
-
-        private void LibraryList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            // Не запускаем второе размещение от двойного щелчка.
-            e.Handled = true;
         }
 
         // PreviewMouseDown fires before hit-testing is consumed by canvas children.
@@ -822,9 +811,8 @@ namespace WpfApp1
                 var first = LibraryList.Items.OfType<ListBoxItem>().FirstOrDefault(item => item.Visibility == Visibility.Visible);
                 if (first != null)
                 {
-                    bool alreadySelected = ReferenceEquals(LibraryList.SelectedItem, first);
                     LibraryList.SelectedItem = first;
-                    if (alreadySelected) AddComponent_Click(this, new RoutedEventArgs());
+                    AddComponent_Click(this, new RoutedEventArgs());
                     first.Focus();
                     BoardCanvas.Focus();
                 }
@@ -1015,7 +1003,7 @@ namespace WpfApp1
 
         private void TrackMode_Click(object sender, RoutedEventArgs e)
         {
-            _trackMode = true; _dragging = false; _trackStart = null; _placingComponent = false; _placementPreview = null;
+            _trackMode = true; _dragging = false; _trackStart = null; _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null;
             BoardCanvas.Cursor = Cursors.Cross;
             RedrawBoard();
             StatusText.Text = "Режим дорожки: щёлкните начальную, затем конечную точку внутри платы.";
@@ -1023,7 +1011,7 @@ namespace WpfApp1
 
         private void SelectMode_Click(object sender, RoutedEventArgs e)
         {
-            _trackMode = false; _trackStart = null; _placingComponent = false; _placementPreview = null;
+            _trackMode = false; _trackStart = null; _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null;
             BoardCanvas.Cursor = Cursors.Arrow;
             RedrawBoard();
             StatusText.Text = "Режим выбора: щёлкните и перетащите компонент.";
@@ -1281,12 +1269,6 @@ namespace WpfApp1
         private void LayerVisibility_Changed(object sender, RoutedEventArgs e)
         {
             if (BoardCanvas != null) RedrawBoard();
-        }
-
-        private void LibraryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!IsLoaded || LibraryList.SelectedItem == null) return;
-            AddComponent_Click(sender, new RoutedEventArgs());
         }
 
         private void DuplicateSelected_Click(object sender, RoutedEventArgs e) { DuplicateSelected(); }
