@@ -284,6 +284,17 @@ namespace WpfApp1
             Canvas.SetLeft(pad, x); Canvas.SetTop(pad, y); BoardCanvas.Children.Add(pad);
         }
 
+        private void LibraryList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var item = ItemsControl.ContainerFromElement(LibraryList, e.OriginalSource as DependencyObject) as ListBoxItem;
+            if (item == null) return;
+
+            // A click on a library item picks it up even when it was already selected.
+            // The next left click on the board commits it at that exact location.
+            LibraryList.SelectedItem = item;
+            AddComponent_Click(LibraryList, new RoutedEventArgs());
+        }
+
         private void AddComponent_Click(object sender, RoutedEventArgs e)
         {
             var item = LibraryList.SelectedItem as ListBoxItem;
@@ -308,10 +319,11 @@ namespace WpfApp1
             _trackStart = null;
             _dragging = false;
             _selected = _placementPreview;
+            BoardCanvas.ReleaseMouseCapture();
+            BoardCanvas.Cursor = Cursors.Cross;
             RefreshSelection();
             RedrawBoard();
-            StatusText.Text = "Размещение " + _placementPreview.Reference + ": переместите курсор и щёлкните, чтобы установить. R — поворот, Esc — отмена.";
-            BoardCanvas.Cursor = Cursors.Cross;
+            StatusText.Text = "Выбран " + _placementPreview.Reference + ". Щёлкните ЛКМ по плате, чтобы закрепить компонент в этой точке. R — поворот, Esc — отмена.";
         }
 
         // PreviewMouseDown fires before hit-testing is consumed by canvas children.
@@ -360,18 +372,28 @@ namespace WpfApp1
                 }
 
                 Point placement = SnapComponentCenter(ToMm(p), _placementPreview);
-                _placementPreview.X = placement.X;
-                _placementPreview.Y = placement.Y;
+                PcbComponent placedComponent = _placementPreview;
+                placedComponent.X = placement.X;
+                placedComponent.Y = placement.Y;
                 PushUndoSnapshot();
-                _project.Components.Add(_placementPreview);
-                _selected = _placementPreview;
-                string placedReference = _placementPreview.Reference;
+                _project.Components.Add(placedComponent);
+                _selected = placedComponent;
+                string placedReference = placedComponent.Reference;
+
+                // End placement before redrawing so mouse movement cannot keep moving
+                // the newly committed component as if it were still a preview.
                 _placementPreview = null;
                 _placingComponent = false;
+                _dragging = false;
+                BoardCanvas.ReleaseMouseCapture();
                 BoardCanvas.Cursor = Cursors.Arrow;
-                RefreshSelection();
                 RedrawBoard();
-                StatusText.Text = placedReference + " установлен. Можно перетащить его или добавить следующий компонент.";
+                RefreshSelection();
+                UpdateStatus();
+                StatusText.Text = placedReference + " закреплён на плате: X " +
+                    placement.X.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) +
+                    " мм, Y " + placement.Y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) +
+                    " мм. Компонент добавлен в проект.";
                 e.Handled = true;
                 return;
             }
