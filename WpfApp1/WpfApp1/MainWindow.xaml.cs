@@ -1303,6 +1303,7 @@ namespace WpfApp1
             AddComponent_Click(sender, new RoutedEventArgs());
         }
 
+        private void DuplicateSelected_Click(object sender, RoutedEventArgs e) { DuplicateSelected(); }
         private void Undo_Click(object sender, RoutedEventArgs e) { Undo(); }
         private void Redo_Click(object sender, RoutedEventArgs e) { Redo(); }
         private void Copy_Click(object sender, RoutedEventArgs e) { CopySelected(); }
