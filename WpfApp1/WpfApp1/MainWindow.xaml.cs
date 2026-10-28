@@ -34,6 +34,9 @@ namespace WpfApp1
         private Line _trackPreviewLine;
         private double _zoom = 1.0;
         private readonly double[] _gridPresets = new double[] { 1.0, 0.5, 0.1 };
+        private PcbComponent _clipboardComponent;
+        private readonly Stack<string> _undoStack = new Stack<string>();
+        private readonly Stack<string> _redoStack = new Stack<string>();
         private int _gridPresetIndex = 1;
         private string _currentFile;
 
@@ -299,6 +302,7 @@ namespace WpfApp1
                 Point placement = SnapComponentCenter(ToMm(p), _placementPreview);
                 _placementPreview.X = placement.X;
                 _placementPreview.Y = placement.Y;
+                PushUndoSnapshot();
                 _project.Components.Add(_placementPreview);
                 _selected = _placementPreview;
                 string placedReference = _placementPreview.Reference;
@@ -331,6 +335,7 @@ namespace WpfApp1
                 {
                     if (Distance(_trackStart.Value, mm) > 0.1)
                     {
+                        PushUndoSnapshot();
                         _project.Tracks.Add(new PcbTrack
                         {
                             X1 = _trackStart.Value.X, Y1 = _trackStart.Value.Y,
@@ -352,6 +357,7 @@ namespace WpfApp1
             _selected = hit;
             if (_selected != null)
             {
+                PushUndoSnapshot();
                 _dragging = true;
                 BoardCanvas.CaptureMouse();
                 RefreshSelection();
@@ -465,18 +471,11 @@ namespace WpfApp1
                 StatusText.Text = SnapCheck.IsChecked == true ? "Привязка к сетке включена." : "Привязка к сетке выключена.";
             }
             else if (control && e.Key == Key.D && !textInputFocused) DuplicateSelected();
-            else if (control && e.Key == Key.A && !textInputFocused)
-            {
-                StatusText.Text = "Множественное выделение пока не поддерживается; выбран один компонент.";
-            }
-            else if (control && (e.Key == Key.C || e.Key == Key.X || e.Key == Key.V) && !textInputFocused)
-            {
-                StatusText.Text = "Копирование/вырезание через буфер пока не реализовано. Используйте Ctrl+D для дублирования.";
-            }
-            else if (control && (e.Key == Key.Z || e.Key == Key.Y) && !textInputFocused)
-            {
-                StatusText.Text = "История отмены/повтора пока не реализована.";
-            }
+            else if (control && e.Key == Key.C && !textInputFocused) CopySelected();
+            else if (control && e.Key == Key.X && !textInputFocused) CutSelected();
+            else if (control && e.Key == Key.V && !textInputFocused) PasteClipboard();
+            else if (control && e.Key == Key.Z && !textInputFocused) Undo();
+            else if (control && e.Key == Key.Y && !textInputFocused) Redo();
             else if (!control && !textInputFocused && e.Key == Key.Delete) DeleteSelected_Click(this, new RoutedEventArgs());
             else if (!control && !textInputFocused && e.Key == Key.G && shift)
             {
@@ -521,6 +520,7 @@ namespace WpfApp1
                 }
                 else if (_selected != null)
                 {
+                    PushUndoSnapshot();
                     _selected.Rotation = (_selected.Rotation + (shift ? 270 : 90)) % 360;
                     RedrawBoard();
                     StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
@@ -542,6 +542,7 @@ namespace WpfApp1
                 }
                 else
                 {
+                    PushUndoSnapshot();
                     double step = SnapCheck.IsChecked == true ? _gridPresets[_gridPresetIndex] : 0.5;
                     if (e.Key == Key.Left) _selected.X = Math.Max(0, _selected.X - step);
                     else if (e.Key == Key.Right) _selected.X = Math.Min(100, _selected.X + step);
@@ -576,6 +577,111 @@ namespace WpfApp1
             ZoomText.Text = "Масштаб: " + Math.Round(_zoom * 100) + "%";
         }
 
+        private string CaptureProject()
+        {
+            var serializer = new XmlSerializer(typeof(PcbProject));
+            using (var writer = new StringWriter(System.Globalization.CultureInfo.InvariantCulture))
+            {
+                serializer.Serialize(writer, _project);
+                return writer.ToString();
+            }
+        }
+
+        private void PushUndoSnapshot()
+        {
+            _undoStack.Push(CaptureProject());
+            while (_undoStack.Count > 50)
+            {
+                var retained = _undoStack.Reverse().Take(50).ToArray();
+                _undoStack.Clear();
+                foreach (var snapshot in retained) _undoStack.Push(snapshot);
+            }
+            _redoStack.Clear();
+        }
+
+        private void RestoreProject(string snapshot)
+        {
+            var serializer = new XmlSerializer(typeof(PcbProject));
+            using (var reader = new StringReader(snapshot))
+            {
+                var restored = (PcbProject)serializer.Deserialize(reader);
+                _project.Name = restored.Name;
+                _project.Components = restored.Components ?? new List<PcbComponent>();
+                _project.Tracks = restored.Tracks ?? new List<PcbTrack>();
+            }
+            _selected = null;
+            _placingComponent = false;
+            _placementPreview = null;
+            _trackMode = false;
+            _trackStart = null;
+            BoardCanvas.Cursor = Cursors.Arrow;
+            RefreshSelection();
+            RedrawBoard();
+            UpdateStatus();
+        }
+
+        private void Undo()
+        {
+            if (_undoStack.Count == 0) { StatusText.Text = "Нет действий для отмены."; return; }
+            _redoStack.Push(CaptureProject());
+            RestoreProject(_undoStack.Pop());
+            StatusText.Text = "Действие отменено.";
+        }
+
+        private void Redo()
+        {
+            if (_redoStack.Count == 0) { StatusText.Text = "Нет действий для повтора."; return; }
+            _undoStack.Push(CaptureProject());
+            RestoreProject(_redoStack.Pop());
+            StatusText.Text = "Действие повторено.";
+        }
+
+        private void CopySelected()
+        {
+            if (_selected == null || !_project.Components.Contains(_selected))
+            {
+                StatusText.Text = "Выберите компонент для копирования.";
+                return;
+            }
+            _clipboardComponent = new PcbComponent
+            {
+                Reference = _selected.Reference, Type = _selected.Type, Value = _selected.Value,
+                X = _selected.X, Y = _selected.Y, Rotation = _selected.Rotation
+            };
+            StatusText.Text = _selected.Reference + " скопирован. Ctrl+V — вставить.";
+        }
+
+        private void CutSelected()
+        {
+            CopySelected();
+            if (_clipboardComponent != null && _selected != null && _project.Components.Contains(_selected))
+                DeleteSelected_Click(this, new RoutedEventArgs());
+        }
+
+        private void PasteClipboard()
+        {
+            if (_clipboardComponent == null) { StatusText.Text = "Сначала скопируйте компонент (Ctrl+C)."; return; }
+            string prefix = new string(_clipboardComponent.Reference.TakeWhile(ch => !char.IsDigit(ch)).ToArray());
+            if (string.IsNullOrEmpty(prefix)) prefix = _clipboardComponent.Type;
+            int index = 1;
+            while (_project.Components.Any(component => component.Reference == prefix + index)) index++;
+            PushUndoSnapshot();
+            double step = _gridPresets[_gridPresetIndex];
+            var copy = new PcbComponent
+            {
+                Reference = prefix + index, Type = _clipboardComponent.Type, Value = _clipboardComponent.Value,
+                X = Math.Max(0, Math.Min(100, _clipboardComponent.X + step)),
+                Y = Math.Max(0, Math.Min(60, _clipboardComponent.Y + step)),
+                Rotation = _clipboardComponent.Rotation
+            };
+            _project.Components.Add(copy);
+            _selected = copy;
+            RefreshSelection();
+            RedrawBoard();
+            UpdateStatus();
+            StatusText.Text = copy.Reference + " вставлен.";
+        }
+
         private void DuplicateSelected()
         {
             if (_selected == null || !_project.Components.Contains(_selected))
@@ -597,6 +703,8 @@ namespace WpfApp1
                 Y = Math.Min(60, _selected.Y + (_gridPresets[_gridPresetIndex])),
                 Rotation = _selected.Rotation
             };
+            PushUndoSnapshot();
+            PushUndoSnapshot();
             _project.Components.Add(copy);
             _selected = copy;
             RefreshSelection();
@@ -623,7 +731,9 @@ namespace WpfApp1
                 var first = LibraryList.Items.OfType<ListBoxItem>().FirstOrDefault(item => item.Visibility == Visibility.Visible);
                 if (first != null)
                 {
+                    bool alreadySelected = ReferenceEquals(LibraryList.SelectedItem, first);
                     LibraryList.SelectedItem = first;
+                    if (alreadySelected) AddComponent_Click(this, new RoutedEventArgs());
                     first.Focus();
                     BoardCanvas.Focus();
                 }
@@ -711,6 +821,7 @@ namespace WpfApp1
                 return;
             }
 
+            PushUndoSnapshot();
             _selected.Rotation = (_selected.Rotation + 90) % 360;
             RedrawBoard();
             StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
@@ -830,6 +941,7 @@ namespace WpfApp1
         {
             if (_selected == null) { StatusText.Text = "Сначала выберите компонент."; return; }
             string reference = _selected.Reference;
+            PushUndoSnapshot();
             _project.Components.Remove(_selected);
             _selected = null;
             _placingComponent = false;
