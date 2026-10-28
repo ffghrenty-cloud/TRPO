@@ -463,7 +463,7 @@ namespace WpfApp1
             if (control && e.Key == Key.S) SaveProject_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.O) OpenProject_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.N) NewProject_Click(this, new RoutedEventArgs());
-            else if (control && e.Key == Key.E) ExportSvg_Click(this, new RoutedEventArgs());
+            else if (control && (e.Key == Key.E || e.Key == Key.P)) ExportSvg_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.D0) FitBoard_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.G && !textInputFocused)
             {
@@ -525,6 +525,14 @@ namespace WpfApp1
                     RedrawBoard();
                     StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
                 }
+            }
+            else if (!control && !textInputFocused && e.Key == Key.F1)
+                Help_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && e.Key == Key.Tab && _placingComponent && _placementPreview != null)
+            {
+                ReferenceBox.Focus();
+                ReferenceBox.SelectAll();
+                StatusText.Text = "Редактирование свойств компонента. Изменения примените кнопкой свойств; Esc отменяет размещение.";
             }
             else if (!control && !textInputFocused && (e.Key == Key.T))
                 TrackMode_Click(this, new RoutedEventArgs());
