@@ -1069,6 +1069,7 @@ namespace WpfApp1
             }
             _project.Name = "Новый проект";
             _project.Components.Clear(); _project.Tracks.Clear();
+            if (_project.Holes == null) _project.Holes = new List<PcbHole>(); else _project.Holes.Clear();
             _selected = null; _currentFile = null; _trackMode = false; _trackStart = null;
             _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow;
             RefreshSelection(); RedrawBoard();
