@@ -1303,6 +1303,12 @@ namespace WpfApp1
             AddComponent_Click(sender, new RoutedEventArgs());
         }
 
+        private void Undo_Click(object sender, RoutedEventArgs e) { Undo(); }
+        private void Redo_Click(object sender, RoutedEventArgs e) { Redo(); }
+        private void Copy_Click(object sender, RoutedEventArgs e) { CopySelected(); }
+        private void Cut_Click(object sender, RoutedEventArgs e) { CutSelected(); }
+        private void Paste_Click(object sender, RoutedEventArgs e) { PasteClipboard(); }
+
         private void Help_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("PCB Studio — справка по горячим клавишам\n\n" +
