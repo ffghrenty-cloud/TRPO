@@ -202,8 +202,6 @@ namespace WpfApp1
             _holePreviewPoint = null;
             _placingComponent = false;
             _placementPreview = null;
-            _placingHole = false;
-            _holePreviewPoint = null;
             _trackMode = false;
             _trackStart = null;
             _selected = null;
@@ -326,12 +324,16 @@ namespace WpfApp1
             StatusText.Text = "Выбран " + _placementPreview.Reference + ". Щёлкните ЛКМ по плате, чтобы закрепить компонент в этой точке. R — поворот, Esc — отмена.";
         }
 
-        // PreviewMouseDown fires before hit-testing is consumed by canvas children.
-        // Handle the click on the Canvas itself so placement works on the board,
-        // grid lines, labels, and empty canvas area through the same code path.
-        private void BoardCanvas_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        // Catch placement clicks at the window level so canvas children, scrolling,
+        // and redraws cannot swallow the click before it commits the preview.
+        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
+            if (!_placingComponent && !_placingHole) return;
+            if (!BoardCanvas.IsMouseOver) return;
+
+            Point p = e.GetPosition(BoardCanvas);
+            if (p.X < 0 || p.Y < 0 || p.X > BoardCanvas.ActualWidth || p.Y > BoardCanvas.ActualHeight) return;
 
             BoardCanvas_MouseLeftButtonDown(BoardCanvas, e);
             e.Handled = true;
