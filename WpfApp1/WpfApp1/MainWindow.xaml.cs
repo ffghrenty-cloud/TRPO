@@ -348,7 +348,10 @@ namespace WpfApp1
             }
 
             if (insideBoardCanvas)
+            {
                 BoardCanvas_MouseLeftButtonDown(sender, e);
+                e.Handled = true;
+            }
         }
 
         private void BoardCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
