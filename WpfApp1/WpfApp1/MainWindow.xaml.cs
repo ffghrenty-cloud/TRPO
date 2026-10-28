@@ -33,6 +33,8 @@ namespace WpfApp1
         private Point? _trackStart;
         private Line _trackPreviewLine;
         private double _zoom = 1.0;
+        private readonly double[] _gridPresets = new double[] { 1.0, 0.5, 0.1 };
+        private int _gridPresetIndex = 1;
         private string _currentFile;
 
         public MainWindow()
@@ -67,13 +69,13 @@ namespace WpfApp1
 
             if (_showGrid)
             {
-                for (double x = BoardLeft + 10; x < BoardLeft + BoardWidth; x += 10)
+                for (double x = BoardLeft + _gridPresets[_gridPresetIndex] * PixelsPerMm; x < BoardLeft + BoardWidth; x += _gridPresets[_gridPresetIndex] * PixelsPerMm)
                 {
                     var line = new Line { X1 = x, X2 = x, Y1 = BoardTop, Y2 = BoardTop + BoardHeight,
                         Stroke = new SolidColorBrush(Color.FromArgb(45, 215, 238, 225)), StrokeThickness = 0.5 };
                     BoardCanvas.Children.Add(line);
                 }
-                for (double y = BoardTop + 10; y < BoardTop + BoardHeight; y += 10)
+                for (double y = BoardTop + _gridPresets[_gridPresetIndex] * PixelsPerMm; y < BoardTop + BoardHeight; y += _gridPresets[_gridPresetIndex] * PixelsPerMm)
                 {
                     var line = new Line { X1 = BoardLeft, X2 = BoardLeft + BoardWidth, Y1 = y, Y2 = y,
                         Stroke = new SolidColorBrush(Color.FromArgb(45, 215, 238, 225)), StrokeThickness = 0.5 };
@@ -410,25 +412,17 @@ namespace WpfApp1
         // Обычное колесо прокручивает рабочую область; Ctrl+колесо меняет масштаб.
         private void BoardCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0)
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0)
             {
-                if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0)
-                {
-                    BoardScrollViewer.ScrollToHorizontalOffset(BoardScrollViewer.HorizontalOffset - e.Delta);
-                    e.Handled = true;
-                }
+                BoardScrollViewer.ScrollToHorizontalOffset(BoardScrollViewer.HorizontalOffset - e.Delta);
+                e.Handled = true;
                 return;
             }
 
-            double factor = e.Delta > 0 ? 1.1 : 1.0 / 1.1;
-            double newZoom = Math.Max(0.4, Math.Min(3.0, _zoom * factor));
-            if (Math.Abs(newZoom - _zoom) < 0.001) return;
-
-            _zoom = newZoom;
-            BoardCanvas.LayoutTransform = new ScaleTransform(_zoom, _zoom);
-            ZoomText.Text = "Масштаб: " + Math.Round(_zoom * 100) + "%";
+            ChangeZoom(e.Delta > 0 ? 1.1 : 1.0 / 1.1);
             e.Handled = true;
         }
+
 
         // Средняя кнопка мыши позволяет перетаскивать рабочую область.
         private void BoardCanvas_MouseDown(object sender, MouseButtonEventArgs e)
@@ -457,6 +451,7 @@ namespace WpfApp1
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             bool control = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+            bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
             bool textInputFocused = Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
 
             if (control && e.Key == Key.S) SaveProject_Click(this, new RoutedEventArgs());
@@ -464,14 +459,99 @@ namespace WpfApp1
             else if (control && e.Key == Key.N) NewProject_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.E) ExportSvg_Click(this, new RoutedEventArgs());
             else if (control && e.Key == Key.D0) FitBoard_Click(this, new RoutedEventArgs());
+            else if (control && e.Key == Key.G && !textInputFocused)
+            {
+                SnapCheck.IsChecked = SnapCheck.IsChecked != true;
+                StatusText.Text = SnapCheck.IsChecked == true ? "Привязка к сетке включена." : "Привязка к сетке выключена.";
+            }
+            else if (control && e.Key == Key.D && !textInputFocused) DuplicateSelected();
+            else if (control && e.Key == Key.A && !textInputFocused)
+            {
+                StatusText.Text = "Множественное выделение пока не поддерживается; выбран один компонент.";
+            }
+            else if (control && (e.Key == Key.C || e.Key == Key.X || e.Key == Key.V) && !textInputFocused)
+            {
+                StatusText.Text = "Копирование/вырезание через буфер пока не реализовано. Используйте Ctrl+D для дублирования.";
+            }
+            else if (control && (e.Key == Key.Z || e.Key == Key.Y) && !textInputFocused)
+            {
+                StatusText.Text = "История отмены/повтора пока не реализована.";
+            }
             else if (!control && !textInputFocused && e.Key == Key.Delete) DeleteSelected_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && e.Key == Key.G && shift)
+            {
+                _gridPresetIndex = (_gridPresetIndex + 1) % _gridPresets.Length;
+                RedrawBoard();
+                StatusText.Text = "Шаг сетки: " + _gridPresets[_gridPresetIndex].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " мм.";
+            }
             else if (!control && !textInputFocused && e.Key == Key.G)
             {
                 _showGrid = !_showGrid;
                 RedrawBoard();
                 StatusText.Text = _showGrid ? "Сетка включена." : "Сетка выключена.";
             }
-            else if (e.Key == Key.Escape)
+            else if (!control && !textInputFocused && (e.Key == Key.C))
+            {
+                LibrarySearchBox.Focus();
+                LibrarySearchBox.SelectAll();
+                StatusText.Text = "Поиск компонента: введите имя, тип или обозначение.";
+            }
+            else if (!control && !textInputFocused && (e.Key == Key.F || e.Key == Key.Space))
+            {
+                if (e.Key == Key.Space && _dragging && _selected != null)
+                {
+                    _selected.Rotation = (_selected.Rotation + 90) % 360;
+                    RedrawBoard();
+                    StatusText.Text = _selected.Reference + " повёрнут на 90°.";
+                }
+                else FitBoard_Click(this, new RoutedEventArgs());
+            }
+            else if (!control && !textInputFocused && (e.Key == Key.Add || e.Key == Key.OemPlus))
+                ChangeZoom(1.1);
+            else if (!control && !textInputFocused && (e.Key == Key.Subtract || e.Key == Key.OemMinus))
+                ChangeZoom(1.0 / 1.1);
+            else if (!control && !textInputFocused && (e.Key == Key.R))
+            {
+                if (_placingComponent && _placementPreview != null)
+                {
+                    _placementPreview.Rotation = (_placementPreview.Rotation + (shift ? 270 : 90)) % 360;
+                    RefreshSelection();
+                    RedrawBoard();
+                    StatusText.Text = "Поворот предпросмотра: " + _placementPreview.Rotation + "°. Щёлкните для установки.";
+                }
+                else if (_selected != null)
+                {
+                    _selected.Rotation = (_selected.Rotation + (shift ? 270 : 90)) % 360;
+                    RedrawBoard();
+                    StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
+                }
+            }
+            else if (!control && !textInputFocused && (e.Key == Key.T))
+                TrackMode_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && (e.Key == Key.V || e.Key == Key.S))
+                SelectMode_Click(this, new RoutedEventArgs());
+            else if (!control && !textInputFocused && (e.Key == Key.Left || e.Key == Key.Right || e.Key == Key.Up || e.Key == Key.Down))
+            {
+                if (_selected == null)
+                {
+                    double step = 60;
+                    if (e.Key == Key.Left) BoardScrollViewer.ScrollToHorizontalOffset(BoardScrollViewer.HorizontalOffset - step);
+                    else if (e.Key == Key.Right) BoardScrollViewer.ScrollToHorizontalOffset(BoardScrollViewer.HorizontalOffset + step);
+                    else if (e.Key == Key.Up) BoardScrollViewer.ScrollToVerticalOffset(BoardScrollViewer.VerticalOffset - step);
+                    else BoardScrollViewer.ScrollToVerticalOffset(BoardScrollViewer.VerticalOffset + step);
+                }
+                else
+                {
+                    double step = SnapCheck.IsChecked == true ? _gridPresets[_gridPresetIndex] : 0.5;
+                    if (e.Key == Key.Left) _selected.X = Math.Max(0, _selected.X - step);
+                    else if (e.Key == Key.Right) _selected.X = Math.Min(100, _selected.X + step);
+                    else if (e.Key == Key.Up) _selected.Y = Math.Max(0, _selected.Y - step);
+                    else _selected.Y = Math.Min(60, _selected.Y + step);
+                    RefreshSelection();
+                    RedrawBoard();
+                }
+            }
+            else if (e.Key == Key.Escape && !textInputFocused)
             {
                 _trackMode = false;
                 _trackStart = null;
@@ -484,21 +564,80 @@ namespace WpfApp1
                 RedrawBoard();
                 StatusText.Text = "Операция отменена. Режим выбора.";
             }
-            else if (!control && e.Key == Key.R && _placingComponent && _placementPreview != null)
-            {
-                _placementPreview.Rotation = (_placementPreview.Rotation + 90) % 360;
-                RefreshSelection();
-                RedrawBoard();
-                StatusText.Text = "Поворот предпросмотра: " + _placementPreview.Rotation + "°. Щёлкните для установки.";
-            }
-            else if (!control && !textInputFocused && e.Key == Key.T)
-                TrackMode_Click(this, new RoutedEventArgs());
-            else if (!control && !textInputFocused && e.Key == Key.V)
-                SelectMode_Click(this, new RoutedEventArgs());
             else return;
 
             e.Handled = true;
         }
+
+        private void ChangeZoom(double factor)
+        {
+            _zoom = Math.Max(0.25, Math.Min(3.0, _zoom * factor));
+            BoardCanvas.LayoutTransform = new ScaleTransform(_zoom, _zoom);
+            ZoomText.Text = "Масштаб: " + Math.Round(_zoom * 100) + "%";
+        }
+
+        private void DuplicateSelected()
+        {
+            if (_selected == null || !_project.Components.Contains(_selected))
+            {
+                StatusText.Text = "Выберите компонент для дублирования.";
+                return;
+            }
+
+            string prefix = new string(_selected.Reference.TakeWhile(ch => !char.IsDigit(ch)).ToArray());
+            if (string.IsNullOrEmpty(prefix)) prefix = _selected.Type;
+            int index = 1;
+            while (_project.Components.Any(component => component.Reference == prefix + index)) index++;
+            var copy = new PcbComponent
+            {
+                Reference = prefix + index,
+                Type = _selected.Type,
+                Value = _selected.Value,
+                X = Math.Min(100, _selected.X + (_gridPresets[_gridPresetIndex])),
+                Y = Math.Min(60, _selected.Y + (_gridPresets[_gridPresetIndex])),
+                Rotation = _selected.Rotation
+            };
+            _project.Components.Add(copy);
+            _selected = copy;
+            RefreshSelection();
+            RedrawBoard();
+            UpdateStatus();
+            StatusText.Text = copy.Reference + " создан (Ctrl+D).";
+        }
+
+        private void LibrarySearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (LibraryList == null) return;
+            string query = LibrarySearchBox.Text.Trim();
+            foreach (var item in LibraryList.Items.OfType<ListBoxItem>())
+            {
+                string searchable = (Convert.ToString(item.Content) + " " + Convert.ToString(item.Tag)).ToLowerInvariant();
+                item.Visibility = searchable.Contains(query.ToLowerInvariant()) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void LibrarySearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                var first = LibraryList.Items.OfType<ListBoxItem>().FirstOrDefault(item => item.Visibility == Visibility.Visible);
+                if (first != null)
+                {
+                    LibraryList.SelectedItem = first;
+                    first.Focus();
+                    BoardCanvas.Focus();
+                }
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                LibrarySearchBox.Clear();
+                BoardCanvas.Focus();
+                e.Handled = true;
+            }
+        }
+
+        
 
         private Point SnapPoint(Point mm)
         {
@@ -529,7 +668,8 @@ namespace WpfApp1
             }
 
             if (bestDistance < 0.8) return best;
-            return new Point(Math.Round(mm.X * 2.0) / 2.0, Math.Round(mm.Y * 2.0) / 2.0);
+            double step = _gridPresets[_gridPresetIndex];
+            return new Point(Math.Round(mm.X / step) * step, Math.Round(mm.Y / step) * step);
         }
 
         private static Point RotatePadMm(PcbComponent component, double dx, double dy)
@@ -585,8 +725,9 @@ namespace WpfApp1
             double y = Math.Max(halfHeight, Math.Min(60 - halfHeight, mm.Y));
             if (SnapCheck != null && SnapCheck.IsChecked == true)
             {
-                x = Math.Round(x * 2.0) / 2.0;
-                y = Math.Round(y * 2.0) / 2.0;
+                double gridStep = _gridPresets[_gridPresetIndex];
+                x = Math.Round(x / gridStep) * gridStep;
+                y = Math.Round(y / gridStep) * gridStep;
             }
             return new Point(x, y);
         }
@@ -901,11 +1042,22 @@ namespace WpfApp1
 
         private void FitBoard_Click(object sender, RoutedEventArgs e)
         {
-            _zoom = 1.0;
-            BoardCanvas.LayoutTransform = new ScaleTransform(1, 1);
-            ZoomText.Text = "Масштаб: 100%";
-            StatusText.Text = "Масштаб сброшен.";
+            double viewportWidth = BoardScrollViewer.ViewportWidth;
+            double viewportHeight = BoardScrollViewer.ViewportHeight;
+            if (double.IsNaN(viewportWidth) || viewportWidth < 100) viewportWidth = BoardScrollViewer.ActualWidth;
+            if (double.IsNaN(viewportHeight) || viewportHeight < 100) viewportHeight = BoardScrollViewer.ActualHeight;
+            if (viewportWidth > 100 && viewportHeight > 100)
+                _zoom = Math.Max(0.25, Math.Min(1.0, Math.Min(viewportWidth / BoardCanvas.Width, viewportHeight / BoardCanvas.Height) * 0.96));
+            else
+                _zoom = 1.0;
+
+            BoardCanvas.LayoutTransform = new ScaleTransform(_zoom, _zoom);
+            ZoomText.Text = "Масштаб: " + Math.Round(_zoom * 100) + "%";
+            BoardScrollViewer.ScrollToHorizontalOffset(0);
+            BoardScrollViewer.ScrollToVerticalOffset(0);
+            StatusText.Text = "Вся плата вписана в рабочую область.";
         }
+
 
         private void ToggleGrid_Click(object sender, RoutedEventArgs e)
         {
