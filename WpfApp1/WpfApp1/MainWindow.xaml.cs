@@ -451,6 +451,7 @@ namespace WpfApp1
                 _placingHole = false;
                 _holePreviewPoint = null;
                 BoardCanvas.Cursor = Cursors.Arrow;
+                Mouse.OverrideCursor = null;
                 RedrawBoard();
                 StatusText.Text = string.Format("Монтажное отверстие Ø3,2 мм установлено: X {0:0.0}, Y {1:0.0} мм.", mm.X, mm.Y);
                 e.Handled = true;
@@ -487,6 +488,7 @@ namespace WpfApp1
                 _dragging = false;
                 BoardCanvas.ReleaseMouseCapture();
                 BoardCanvas.Cursor = Cursors.Arrow;
+                Mouse.OverrideCursor = null;
                 RedrawBoard();
                 RefreshSelection();
                 UpdateStatus();
@@ -1255,7 +1257,7 @@ namespace WpfApp1
             _project.Components.Clear(); _project.Tracks.Clear();
             if (_project.Holes == null) _project.Holes = new List<PcbHole>(); else _project.Holes.Clear();
             _selected = null; _currentFile = null; _trackMode = false; _trackStart = null;
-            _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow;
+            _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow; Mouse.OverrideCursor = null;
             RefreshSelection(); RedrawBoard();
             StatusText.Text = "Создан новый проект.";
         }
@@ -1299,7 +1301,7 @@ namespace WpfApp1
                 _project.Tracks = loaded.Tracks ?? new List<PcbTrack>();
                 _project.Holes = loaded.Holes ?? new List<PcbHole>();
                 _selected = null; _currentFile = dialog.FileName; _trackMode = false; _trackStart = null;
-                _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow;
+                _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null; BoardCanvas.Cursor = Cursors.Arrow; Mouse.OverrideCursor = null;
                 RefreshSelection(); RedrawBoard();
                 StatusText.Text = "Открыт проект: " + System.IO.Path.GetFileName(dialog.FileName);
             }
