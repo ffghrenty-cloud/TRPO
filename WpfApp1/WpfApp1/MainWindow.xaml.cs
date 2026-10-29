@@ -751,14 +751,27 @@ namespace WpfApp1
                 }
                 else
                 {
-                    PushUndoSnapshot();
                     double step = SnapCheck.IsChecked == true ? _gridPresets[_gridPresetIndex] : 0.5;
-                    if (e.Key == Key.Left) _selected.X = Math.Max(0, _selected.X - step);
-                    else if (e.Key == Key.Right) _selected.X = Math.Min(100, _selected.X + step);
-                    else if (e.Key == Key.Up) _selected.Y = Math.Max(0, _selected.Y - step);
-                    else _selected.Y = Math.Min(60, _selected.Y + step);
-                    RefreshSelection();
-                    RedrawBoard();
+                    double nextX = _selected.X;
+                    double nextY = _selected.Y;
+                    if (e.Key == Key.Left) nextX -= step;
+                    else if (e.Key == Key.Right) nextX += step;
+                    else if (e.Key == Key.Up) nextY -= step;
+                    else nextY += step;
+                    Point next = SnapComponentCenter(new Point(nextX, nextY), _selected);
+                    string moveError;
+                    if (CanPlaceComponent(_selected, next.X, next.Y, _selected, out moveError))
+                    {
+                        PushUndoSnapshot();
+                        _selected.X = next.X;
+                        _selected.Y = next.Y;
+                        RefreshSelection();
+                        RedrawBoard();
+                    }
+                    else
+                    {
+                        StatusText.Text = moveError;
+                    }
                 }
             }
             else if (e.Key == Key.Escape && !textInputFocused)
@@ -1179,6 +1192,13 @@ namespace WpfApp1
                 string.Equals(component.Reference, reference, StringComparison.OrdinalIgnoreCase)))
             {
                 MessageBox.Show("Обозначение " + reference + " уже используется.", "Дубликат обозначения",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            string placementError;
+            if (!CanPlaceComponent(_selected, x, y, _selected, out placementError))
+            {
+                MessageBox.Show(placementError, "Недопустимое размещение",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
