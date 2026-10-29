@@ -108,6 +108,9 @@
                         <ListBoxItem Content="Переключатель (SW)" Tag="SW" Padding="8"/>
                         <ListBoxItem Content="Штыревой разъём 2,54 мм (H)" Tag="H" Padding="8"/>
                     </ListBox>
+                    <Button DockPanel.Dock="Bottom" Content="＋ Добавить компонент на плату"
+                            Click="AddComponent_Click" Background="#DCEBFF" Margin="0,10,0,0"
+                            ToolTip="Выберите тип в библиотеке, нажмите эту кнопку, затем щёлкните по плате для установки."/>
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
                         <TextBlock Text="СОВЕТ" FontWeight="Bold" FontSize="10" Foreground="#6B7B90" Margin="2,12,0,4"/>
                         <TextBlock Text="Выберите тип компонента — его предпросмотр появится сразу. При трассировке щёлкайте по контактным площадкам; Esc отменяет трассу." TextWrapping="Wrap" FontSize="11" Foreground="#718096"/>
