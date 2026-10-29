@@ -1216,8 +1216,16 @@ namespace WpfApp1
 
         private void TrackMode_Click(object sender, RoutedEventArgs e)
         {
-            _trackMode = true; _dragging = false; _trackStart = null; _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null;
+            _trackMode = true;
+            _dragging = false;
+            _trackStart = null;
+            _placingComponent = false;
+            _placementPreview = null;
+            _placingHole = false;
+            _holePreviewPoint = null;
+            BoardCanvas.ReleaseMouseCapture();
             BoardCanvas.Cursor = Cursors.Cross;
+            Mouse.OverrideCursor = Cursors.Cross;
             RedrawBoard();
             StatusText.Text = "Режим дорожки: щёлкните начальную, затем конечную точку внутри платы.";
         }
