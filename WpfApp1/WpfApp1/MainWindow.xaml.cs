@@ -247,6 +247,12 @@ namespace WpfApp1
                     AddRotatedPad(component, x + w / 2 - 3, y - 15 + i * 8, x, y);
                 }
             }
+            else if (component.Type == "Q")
+            {
+                AddRotatedPad(component, x - w / 2 - 3, y - 3, x, y);
+                AddRotatedPad(component, x + w / 2 - 3, y - 3, x, y);
+                AddRotatedPad(component, x - 3, y + h / 2 - 3, x, y);
+            }
             else if (component.Type != "TP")
             {
                 AddRotatedPad(component, x - w / 2 - 3, y - 3, x, y);
@@ -968,6 +974,12 @@ namespace WpfApp1
                         ConsiderSnap(mm, RotatePadMm(component, -2.9, -1.2 + i * 0.8), ref best, ref bestDistance);
                         ConsiderSnap(mm, RotatePadMm(component, 2.9, -1.2 + i * 0.8), ref best, ref bestDistance);
                     }
+                }
+                else if (component.Type == "Q")
+                {
+                    ConsiderSnap(mm, RotatePadMm(component, -1.2, 0), ref best, ref bestDistance);
+                    ConsiderSnap(mm, RotatePadMm(component, 1.2, 0), ref best, ref bestDistance);
+                    ConsiderSnap(mm, RotatePadMm(component, 0, 0.8), ref best, ref bestDistance);
                 }
                 else if (component.Type == "TP")
                 {
