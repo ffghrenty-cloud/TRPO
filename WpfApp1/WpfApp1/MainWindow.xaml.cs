@@ -324,17 +324,15 @@ namespace WpfApp1
             StatusText.Text = "Выбран " + _placementPreview.Reference + ". Щёлкните ЛКМ по плате, чтобы закрепить компонент в этой точке. R — поворот, Esc — отмена.";
         }
 
-        // Catch placement clicks at the window level so canvas children, scrolling,
-        // and redraws cannot swallow the click before it commits the preview.
-        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        // Handle clicks directly on the canvas in the preview phase. This keeps
+        // placement and track drawing independent of which visual child is under the cursor.
+        private void BoardCanvas_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
-            // Route every left click on the board through the central handler.
-            // Track drawing and selection use this same path when no preview is active.
-            if (!BoardCanvas.IsMouseOver) return;
 
             Point p = e.GetPosition(BoardCanvas);
-            if (p.X < 0 || p.Y < 0 || p.X > BoardCanvas.ActualWidth || p.Y > BoardCanvas.ActualHeight) return;
+            if (p.X < 0 || p.Y < 0 || p.X > BoardCanvas.ActualWidth || p.Y > BoardCanvas.ActualHeight)
+                return;
 
             BoardCanvas_MouseLeftButtonDown(BoardCanvas, e);
             e.Handled = true;
