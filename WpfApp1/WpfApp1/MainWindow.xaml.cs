@@ -206,6 +206,7 @@ namespace WpfApp1
             _trackStart = null;
             _selected = null;
             BoardCanvas.Cursor = Cursors.Cross;
+            Mouse.OverrideCursor = Cursors.Cross;
             RefreshSelection();
             RedrawBoard();
             StatusText.Text = "Монтажное отверстие Ø3,2 мм: щёлкните внутри платы для установки; Esc — отмена.";
@@ -327,6 +328,7 @@ namespace WpfApp1
             _selected = _placementPreview;
             BoardCanvas.ReleaseMouseCapture();
             BoardCanvas.Cursor = Cursors.Cross;
+            Mouse.OverrideCursor = Cursors.Cross;
             RefreshSelection();
             RedrawBoard();
             StatusText.Text = "Выбран " + _placementPreview.Reference + ". Щёлкните ЛКМ по плате, чтобы закрепить компонент в этой точке. R — поворот, Esc — отмена.";
@@ -370,6 +372,7 @@ namespace WpfApp1
                 _placingHole = false;
                 _holePreviewPoint = null;
                 BoardCanvas.Cursor = Cursors.Arrow;
+                Mouse.OverrideCursor = null;
                 RedrawBoard();
                 StatusText.Text = string.Format("Монтажное отверстие Ø3,2 мм установлено: X {0:0.0}, Y {1:0.0} мм.", mm.X, mm.Y);
                 return;
@@ -404,6 +407,7 @@ namespace WpfApp1
                 _dragging = false;
                 BoardCanvas.ReleaseMouseCapture();
                 BoardCanvas.Cursor = Cursors.Arrow;
+                Mouse.OverrideCursor = null;
                 RedrawBoard();
                 RefreshSelection();
                 UpdateStatus();
@@ -781,6 +785,7 @@ namespace WpfApp1
                 _holePreviewPoint = null;
                 _selected = _project.Components.Contains(_selected) ? _selected : null;
                 BoardCanvas.Cursor = Cursors.Arrow;
+                Mouse.OverrideCursor = null;
                 RefreshSelection();
                 RedrawBoard();
                 StatusText.Text = "Операция отменена. Режим выбора.";
@@ -836,6 +841,7 @@ namespace WpfApp1
             _trackMode = false;
             _trackStart = null;
             BoardCanvas.Cursor = Cursors.Arrow;
+            Mouse.OverrideCursor = null;
             RefreshSelection();
             RedrawBoard();
             UpdateStatus();
@@ -1218,6 +1224,7 @@ namespace WpfApp1
         {
             _trackMode = false; _trackStart = null; _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null;
             BoardCanvas.Cursor = Cursors.Arrow;
+            Mouse.OverrideCursor = null;
             RedrawBoard();
             StatusText.Text = "Режим выбора: щёлкните и перетащите компонент.";
         }
