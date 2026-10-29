@@ -103,7 +103,10 @@
                         <ListBoxItem Content="Светодиод (D)" Tag="D" Padding="8"/>
                         <ListBoxItem Content="Микросхема (U)" Tag="U" Padding="8"/>
                         <ListBoxItem Content="Разъём (J)" Tag="J" Padding="8"/>
-                        <ListBoxItem Content="Тестовая точка (TP)" Tag="TP" Padding="8"/>
+                        <ListBoxItem Content="Транзистор (Q)" Tag="Q" Padding="8"/>
+                        <ListBoxItem Content="Катушка индуктивности (L)" Tag="L" Padding="8"/>
+                        <ListBoxItem Content="Переключатель (SW)" Tag="SW" Padding="8"/>
+                        <ListBoxItem Content="Штыревой разъём 2,54 мм (H)" Tag="H" Padding="8"/>
                     </ListBox>
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
                         <TextBlock Text="СОВЕТ" FontWeight="Bold" FontSize="10" Foreground="#6B7B90" Margin="2,12,0,4"/>
