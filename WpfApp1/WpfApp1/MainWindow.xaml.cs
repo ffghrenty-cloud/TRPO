@@ -565,6 +565,15 @@ namespace WpfApp1
 
         private void BoardCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            // If the press event was intercepted by another WPF element/capture,
+            // make one final placement attempt on release. The placement handler
+            // clears its mode flags, so this cannot commit the same object twice.
+            if (_placingHole || (_placingComponent && _placementPreview != null))
+            {
+                BoardCanvas_PreviewMouseLeftButtonDown(BoardCanvas, e);
+                if (e.Handled) return;
+            }
+
             _dragging = false;
             BoardCanvas.ReleaseMouseCapture();
         }
