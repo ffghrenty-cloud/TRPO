@@ -308,7 +308,7 @@ namespace WpfApp1
             {
                 Reference = prefix + index,
                 Type = type,
-                Value = type == "R" ? "10k" : type == "C" ? "100nF" : type == "D" ? "LED" : type == "U" ? "IC" : type == "J" ? "CONN" : "Test",
+                Value = type == "R" ? "10k" : type == "C" ? "100nF" : type == "D" ? "LED" : type == "U" ? "IC" : type == "J" ? "CONN" : type == "Q" ? "NPN" : type == "L" ? "10uH" : type == "SW" ? "SPST" : type == "H" ? "2.54mm" : "Test",
                 X = Math.Min(95, Math.Max(5, 15.0 + (n % 5) * 15.0)),
                 Y = Math.Min(55, Math.Max(5, 15.0 + (n / 5) * 12.0))
             };
@@ -349,8 +349,15 @@ namespace WpfApp1
                 }
 
                 Point mm = SnapPoint(ToMm(p));
-                mm.X = Math.Max(2, Math.Min(98, mm.X));
-                mm.Y = Math.Max(2, Math.Min(58, mm.Y));
+                mm.X = Math.Max(2.1, Math.Min(97.9, mm.X));
+                mm.Y = Math.Max(2.1, Math.Min(57.9, mm.Y));
+                string holeError;
+                if (!CanPlaceHole(mm.X, mm.Y, 3.2, null, out holeError))
+                {
+                    StatusText.Text = holeError;
+                    e.Handled = true;
+                    return;
+                }
                 PushUndoSnapshot();
                 if (_project.Holes == null) _project.Holes = new List<PcbHole>();
                 _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = 3.2 });
@@ -373,6 +380,12 @@ namespace WpfApp1
                 }
 
                 Point placement = SnapComponentCenter(ToMm(p), _placementPreview);
+                string placementError;
+                if (!CanPlaceComponent(_placementPreview, placement.X, placement.Y, null, out placementError))
+                {
+                    StatusText.Text = placementError;
+                    return;
+                }
                 PcbComponent placedComponent = _placementPreview;
                 placedComponent.X = placement.X;
                 placedComponent.Y = placement.Y;
@@ -413,8 +426,15 @@ namespace WpfApp1
                     return;
                 }
                 Point mm = SnapPoint(ToMm(p));
-                mm.X = Math.Max(2, Math.Min(98, mm.X));
-                mm.Y = Math.Max(2, Math.Min(58, mm.Y));
+                mm.X = Math.Max(2.1, Math.Min(97.9, mm.X));
+                mm.Y = Math.Max(2.1, Math.Min(57.9, mm.Y));
+                string holeError;
+                if (!CanPlaceHole(mm.X, mm.Y, 3.2, null, out holeError))
+                {
+                    StatusText.Text = holeError;
+                    e.Handled = true;
+                    return;
+                }
                 PushUndoSnapshot();
                 if (_project.Holes == null) _project.Holes = new List<PcbHole>();
                 _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = 3.2 });
@@ -436,6 +456,12 @@ namespace WpfApp1
                 }
 
                 Point placement = SnapComponentCenter(ToMm(p), _placementPreview);
+                string placementError;
+                if (!CanPlaceComponent(_placementPreview, placement.X, placement.Y, null, out placementError))
+                {
+                    StatusText.Text = placementError;
+                    return;
+                }
                 PcbComponent placedComponent = _placementPreview;
                 placedComponent.X = placement.X;
                 placedComponent.Y = placement.Y;
@@ -545,10 +571,14 @@ namespace WpfApp1
             else if (_dragging && _selected != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
             {
                 Point mm = SnapComponentCenter(ToMm(p), _selected);
-                _selected.X = mm.X;
-                _selected.Y = mm.Y;
-                RefreshSelection();
-                RedrawBoard();
+                string placementError;
+                if (CanPlaceComponent(_selected, mm.X, mm.Y, _selected, out placementError))
+                {
+                    _selected.X = mm.X;
+                    _selected.Y = mm.Y;
+                    RefreshSelection();
+                    RedrawBoard();
+                }
             }
             if (IsInsideBoard(p))
             {
@@ -999,6 +1029,58 @@ namespace WpfApp1
             _selected.Rotation = (_selected.Rotation + 90) % 360;
             RedrawBoard();
             StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
+        }
+
+        private static void GetComponentHalfSize(PcbComponent component, out double halfWidth, out double halfHeight)
+        {
+            halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 : component.Type == "TP" ? 1.2 : 1.7;
+            halfHeight = component.Type == "U" ? 2.1 : component.Type == "J" ? 1.6 : component.Type == "TP" ? 1.2 : 1.1;
+            if (component.Rotation % 180 != 0)
+            {
+                double temp = halfWidth; halfWidth = halfHeight; halfHeight = temp;
+            }
+        }
+
+        private bool CanPlaceComponent(PcbComponent component, double x, double y, PcbComponent ignore, out string error)
+        {
+            double hw, hh; GetComponentHalfSize(component, out hw, out hh);
+            const double clearance = 0.2;
+            if (x - hw < clearance || x + hw > 100 - clearance || y - hh < clearance || y + hh > 60 - clearance)
+            { error = "Компонент не помещается внутри платы с необходимым отступом."; return false; }
+            foreach (var other in _project.Components)
+            {
+                if (ReferenceEquals(other, ignore)) continue;
+                double ow, oh; GetComponentHalfSize(other, out ow, out oh);
+                if (Math.Abs(x - other.X) < hw + ow + clearance && Math.Abs(y - other.Y) < hh + oh + clearance)
+                { error = "Размещение невозможно: корпус пересекается с " + other.Reference + "."; return false; }
+            }
+            foreach (var hole in _project.Holes ?? new List<PcbHole>())
+            {
+                double r = Math.Max(1.0, hole.Diameter / 2.0) + 0.5;
+                if (Math.Abs(x - hole.X) < hw + r && Math.Abs(y - hole.Y) < hh + r)
+                { error = "Размещение невозможно: компонент слишком близко к монтажному отверстию."; return false; }
+            }
+            error = null; return true;
+        }
+
+        private bool CanPlaceHole(double x, double y, double diameter, PcbHole ignore, out string error)
+        {
+            double r = diameter / 2.0; const double clearance = 0.5;
+            if (x - r - clearance < 0 || x + r + clearance > 100 || y - r - clearance < 0 || y + r + clearance > 60)
+            { error = "Для отверстия не хватает отступа от края платы."; return false; }
+            foreach (var hole in _project.Holes ?? new List<PcbHole>())
+            {
+                if (ReferenceEquals(hole, ignore)) continue;
+                if (Distance(new Point(x, y), new Point(hole.X, hole.Y)) < r + hole.Diameter / 2.0 + clearance)
+                { error = "Монтажные отверстия расположены слишком близко друг к другу."; return false; }
+            }
+            foreach (var component in _project.Components)
+            {
+                double hw, hh; GetComponentHalfSize(component, out hw, out hh);
+                if (Math.Abs(x - component.X) < hw + r + clearance && Math.Abs(y - component.Y) < hh + r + clearance)
+                { error = "Отверстие слишком близко к компоненту " + component.Reference + "."; return false; }
+            }
+            error = null; return true;
         }
 
         private Point SnapComponentCenter(Point mm, PcbComponent component)
