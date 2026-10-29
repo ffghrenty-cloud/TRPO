@@ -601,17 +601,13 @@ namespace WpfApp1
 
         private void BoardCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            // If the press event was intercepted by another WPF element/capture,
-            // make one final placement attempt on release. The placement handler
-            // clears its mode flags, so this cannot commit the same object twice.
-            if (_placingHole || (_placingComponent && _placementPreview != null))
-            {
-                BoardCanvas_PreviewMouseLeftButtonDown(BoardCanvas, e);
-                if (e.Handled) return;
-            }
-
+            // Placement is committed only by PreviewMouseLeftButtonDown.
+            // Replaying the press handler from MouseLeftButtonUp is unsafe:
+            // it can treat a release as a second placement attempt and reset
+            // the cursor/mode unexpectedly when WPF changes the hit-tested child.
             _dragging = false;
-            BoardCanvas.ReleaseMouseCapture();
+            if (!_placingComponent && !_placingHole)
+                BoardCanvas.ReleaseMouseCapture();
         }
 
         // Обычное колесо прокручивает рабочую область; Ctrl+колесо меняет масштаб.
