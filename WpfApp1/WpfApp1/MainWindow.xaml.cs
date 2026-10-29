@@ -294,12 +294,10 @@ namespace WpfApp1
             var item = ItemsControl.ContainerFromElement(LibraryList, e.OriginalSource as DependencyObject) as ListBoxItem;
             if (item == null) return;
 
-            // Handle the library click here rather than letting ListBox begin its
-            // own mouse-capture/selection gesture. Placement is a separate action:
-            // the next click on the board commits the component.
+            // Selecting a library item should not start placement by itself.
+            // The user explicitly starts placement with the "Add component" button.
             e.Handled = true;
             LibraryList.SelectedItem = item;
-            AddComponent_Click(LibraryList, new RoutedEventArgs());
         }
 
         private void AddComponent_Click(object sender, RoutedEventArgs e)
