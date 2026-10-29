@@ -16,7 +16,16 @@ jobs:
         uses: microsoft/setup-msbuild@v2
       - name: Build .NET Framework 4.8 WPF project
         run: msbuild WpfApp1/WpfApp1/WpfApp1.csproj /m /p:Configuration=Release /verbosity:minimal
-      - name: Upload compiled application
+      - name: Build new standalone PCB Studio application
+        run: msbuild PCBStudio/PCBStudio.csproj /m /p:Configuration=Release /verbosity:minimal
+      - name: Upload PCB Studio application
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCBStudio-Windows-build
+          path: PCBStudio/bin/Release/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload legacy compiled application
         uses: actions/upload-artifact@v4
         with:
           name: Altium-layout-Windows-build
