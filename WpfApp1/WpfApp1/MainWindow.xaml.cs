@@ -326,8 +326,9 @@ namespace WpfApp1
             StatusText.Text = "Выбран " + _placementPreview.Reference + ". Щёлкните ЛКМ по плате, чтобы закрепить компонент в этой точке. R — поворот, Esc — отмена.";
         }
 
-        // Handle clicks directly on the canvas in the preview phase. This keeps
-        // placement and track drawing independent of which visual child is under the cursor.
+        // Handle placement in the tunnelling phase. The canvas is redrawn on
+        // every mouse move, so relying on a later bubbling mouse event can lose
+        // the click when WPF changes the visual child under the pointer.
         private void BoardCanvas_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
@@ -336,6 +337,66 @@ namespace WpfApp1
             if (p.X < 0 || p.Y < 0 || p.X > BoardCanvas.ActualWidth || p.Y > BoardCanvas.ActualHeight)
                 return;
 
+            // Commit holes here rather than forwarding the same routed event.
+            // This makes placement independent of the visual element hit on the board.
+            if (_placingHole)
+            {
+                e.Handled = true;
+                if (!IsInsideBoard(p))
+                {
+                    StatusText.Text = "Монтажное отверстие должно находиться внутри платы.";
+                    return;
+                }
+
+                Point mm = SnapPoint(ToMm(p));
+                mm.X = Math.Max(2, Math.Min(98, mm.X));
+                mm.Y = Math.Max(2, Math.Min(58, mm.Y));
+                PushUndoSnapshot();
+                if (_project.Holes == null) _project.Holes = new List<PcbHole>();
+                _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = 3.2 });
+                _placingHole = false;
+                _holePreviewPoint = null;
+                BoardCanvas.Cursor = Cursors.Arrow;
+                RedrawBoard();
+                StatusText.Text = string.Format("Монтажное отверстие Ø3,2 мм установлено: X {0:0.0}, Y {1:0.0} мм.", mm.X, mm.Y);
+                return;
+            }
+
+            // Commit the component directly in PreviewMouseLeftButtonDown.
+            if (_placingComponent && _placementPreview != null)
+            {
+                e.Handled = true;
+                if (!IsInsideBoard(p))
+                {
+                    StatusText.Text = "Наведите курсор внутрь платы, чтобы разместить компонент.";
+                    return;
+                }
+
+                Point placement = SnapComponentCenter(ToMm(p), _placementPreview);
+                PcbComponent placedComponent = _placementPreview;
+                placedComponent.X = placement.X;
+                placedComponent.Y = placement.Y;
+                PushUndoSnapshot();
+                _project.Components.Add(placedComponent);
+                _selected = placedComponent;
+                string placedReference = placedComponent.Reference;
+                _placementPreview = null;
+                _placingComponent = false;
+                _dragging = false;
+                BoardCanvas.ReleaseMouseCapture();
+                BoardCanvas.Cursor = Cursors.Arrow;
+                RedrawBoard();
+                RefreshSelection();
+                UpdateStatus();
+                StatusText.Text = placedReference + " закреплён на плате: X " +
+                    placement.X.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) +
+                    " мм, Y " + placement.Y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) +
+                    " мм. Компонент добавлен в проект.";
+                return;
+            }
+
+            // Other canvas actions (tracks and selecting existing components)
+            // continue through the shared mouse handler.
             BoardCanvas_MouseLeftButtonDown(BoardCanvas, e);
             e.Handled = true;
         }
