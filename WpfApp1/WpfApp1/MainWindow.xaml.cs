@@ -619,6 +619,13 @@ namespace WpfApp1
         // Обычное колесо прокручивает рабочую область; Ctrl+колесо меняет масштаб.
         private void BoardCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
+            {
+                ChangeZoom(e.Delta > 0 ? 1.1 : 1.0 / 1.1);
+                e.Handled = true;
+                return;
+            }
+
             if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0)
             {
                 BoardScrollViewer.ScrollToHorizontalOffset(BoardScrollViewer.HorizontalOffset - e.Delta);
@@ -626,7 +633,7 @@ namespace WpfApp1
                 return;
             }
 
-            ChangeZoom(e.Delta > 0 ? 1.1 : 1.0 / 1.1);
+            BoardScrollViewer.ScrollToVerticalOffset(BoardScrollViewer.VerticalOffset - e.Delta);
             e.Handled = true;
         }
 
