@@ -1351,6 +1351,37 @@ namespace WpfApp1
                     if (Math.Abs(a.X - b.X) < (aw + bw) / 2.0 && Math.Abs(a.Y - b.Y) < (ah + bh) / 2.0)
                         issues.Add(a.Reference + " и " + b.Reference + ": корпуса перекрываются.");
                 }
+            var holes = _project.Holes ?? new List<PcbHole>();
+            for (int i = 0; i < holes.Count; i++)
+            {
+                var hole = holes[i];
+                double radius = Math.Max(0, hole.Diameter / 2.0);
+                if (hole.Diameter <= 0)
+                    issues.Add("Монтажное отверстие " + (i + 1) + ": диаметр должен быть больше нуля.");
+                if (hole.X - radius < 0 || hole.X + radius > 100 ||
+                    hole.Y - radius < 0 || hole.Y + radius > 60)
+                    issues.Add("Монтажное отверстие " + (i + 1) + ": находится за границами платы.");
+                for (int j = i + 1; j < holes.Count; j++)
+                {
+                    var other = holes[j];
+                    if (Distance(new Point(hole.X, hole.Y), new Point(other.X, other.Y)) <
+                        radius + Math.Max(0, other.Diameter / 2.0) + 0.5)
+                        issues.Add("Монтажные отверстия " + (i + 1) + " и " + (j + 1) +
+                            ": недостаточный зазор.");
+                }
+                foreach (var component in _project.Components)
+                {
+                    double hw, hh;
+                    GetComponentHalfSize(component, out hw, out hh);
+                    if (Math.Abs(hole.X - component.X) < hw + radius + 0.5 &&
+                        Math.Abs(hole.Y - component.Y) < hh + radius + 0.5)
+                    {
+                        issues.Add("Монтажное отверстие " + (i + 1) +
+                            " слишком близко к компоненту " + component.Reference + ".");
+                    }
+                }
+            }
+
             for (int i = 0; i < _project.Tracks.Count; i++)
             {
                 var t = _project.Tracks[i];
@@ -1518,7 +1549,7 @@ namespace WpfApp1
                 "• Delete — удалить; Ctrl+D — дублировать; Ctrl+C/X/V — копировать/вырезать/вставить.\n" +
                 "• Ctrl+Z / Ctrl+Y — отмена/повтор поддерживаемых изменений; стрелки — сдвиг компонента.\n\n" +
                 "Вид и сетка:\n" +
-                "• Колесо — масштаб; Shift+колесо — горизонтальная прокрутка; средняя кнопка — панорама.\n" +
+                "• Колесо — прокрутка; Ctrl+колесо — масштаб; Shift+колесо — горизонтальная прокрутка; средняя кнопка — панорама.\n" +
                 "• F или Space — уместить плату; + / - — масштаб; G — сетка.\n" +
                 "• Shift+G — шаг сетки; Ctrl+G — привязка к сетке; C — поиск компонента.\n\n" +
                 "Файлы: Ctrl+N — новый; Ctrl+O — открыть; Ctrl+S — сохранить; Ctrl+E или Ctrl+P — экспорт SVG.\n\n" +
