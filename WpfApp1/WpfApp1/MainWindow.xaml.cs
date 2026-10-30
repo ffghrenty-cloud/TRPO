@@ -1169,15 +1169,14 @@ namespace WpfApp1
             int newRotation = (oldRotation + angle + 360) % 360;
             _selected.Rotation = newRotation;
             string error;
-            if (!CanPlaceComponent(_selected, _selected.X, _selected.Y, _selected, out error))
+            bool canRotate = CanPlaceComponent(_selected, _selected.X, _selected.Y, _selected, out error);
+            _selected.Rotation = oldRotation;
+            if (!canRotate)
             {
-                _selected.Rotation = oldRotation;
                 StatusText.Text = "Поворот отменён: " + error;
                 return;
             }
             PushUndoSnapshot();
-            // The snapshot must describe the state before rotation.
-            _selected.Rotation = oldRotation;
             _selected.Rotation = newRotation;
             RedrawBoard();
             StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
