@@ -1415,55 +1415,39 @@ namespace WpfApp1
         private void RunDrc_Click(object sender, RoutedEventArgs e)
         {
             var issues = new List<string>();
-            foreach (var c in _project.Components)
+            foreach (var component in _project.Components)
             {
-                double halfWidth = c.Type == "U" ? 2.9 : c.Type == "J" ? 2.4 : c.Type == "TP" ? 1.2 : 1.7;
-                double halfHeight = c.Type == "U" ? 2.1 : c.Type == "J" ? 1.6 : c.Type == "TP" ? 1.2 : 1.1;
-                if (c.Rotation % 180 != 0) { double temp = halfWidth; halfWidth = halfHeight; halfHeight = temp; }
-                if (c.X - halfWidth < 0 || c.X + halfWidth > 100 || c.Y - halfHeight < 0 || c.Y + halfHeight > 60)
-                    issues.Add(c.Reference + ": корпус или контактная площадка выходит за границы платы.");
+                string placementError;
+                if (!CanPlaceComponent(component, component.X, component.Y, component, out placementError))
+                    issues.Add(component.Reference + ": " + placementError);
             }
-            for (int i = 0; i < _project.Components.Count; i++)
-                for (int j = i + 1; j < _project.Components.Count; j++)
-                {
-                    var a = _project.Components[i]; var b = _project.Components[j];
-                    double aw = a.Type == "U" ? 5.8 : a.Type == "J" ? 4.8 : a.Type == "TP" ? 2.4 : 3.4;
-                    double ah = a.Type == "U" ? 4.2 : a.Type == "J" ? 3.2 : a.Type == "TP" ? 2.4 : 2.2;
-                    double bw = b.Type == "U" ? 5.8 : b.Type == "J" ? 4.8 : b.Type == "TP" ? 2.4 : 3.4;
-                    double bh = b.Type == "U" ? 4.2 : b.Type == "J" ? 3.2 : b.Type == "TP" ? 2.4 : 2.2;
-                    if (a.Rotation % 180 != 0) { double temp = aw; aw = ah; ah = temp; }
-                    if (b.Rotation % 180 != 0) { double temp = bw; bw = bh; bh = temp; }
-                    if (Math.Abs(a.X - b.X) < (aw + bw) / 2.0 && Math.Abs(a.Y - b.Y) < (ah + bh) / 2.0)
-                        issues.Add(a.Reference + " и " + b.Reference + ": корпуса перекрываются.");
-                }
+
             var holes = _project.Holes ?? new List<PcbHole>();
             for (int i = 0; i < holes.Count; i++)
             {
                 var hole = holes[i];
-                double radius = Math.Max(0, hole.Diameter / 2.0);
                 if (hole.Diameter <= 0)
+                {
                     issues.Add("Монтажное отверстие " + (i + 1) + ": диаметр должен быть больше нуля.");
-                if (hole.X - radius < 0 || hole.X + radius > 100 ||
-                    hole.Y - radius < 0 || hole.Y + radius > 60)
-                    issues.Add("Монтажное отверстие " + (i + 1) + ": находится за границами платы.");
+                    continue;
+                }
+
+                double radius = hole.Diameter / 2.0;
+                const double edgeClearance = 0.5;
+                if (hole.X - radius - edgeClearance < 0 ||
+                    hole.X + radius + edgeClearance > 100 ||
+                    hole.Y - radius - edgeClearance < 0 ||
+                    hole.Y + radius + edgeClearance > 60)
+                    issues.Add("Монтажное отверстие " + (i + 1) +
+                        ": недостаточный отступ от края платы (требуется 0,5 мм).");
+
                 for (int j = i + 1; j < holes.Count; j++)
                 {
                     var other = holes[j];
                     if (Distance(new Point(hole.X, hole.Y), new Point(other.X, other.Y)) <
-                        radius + Math.Max(0, other.Diameter / 2.0) + 0.5)
+                        radius + other.Diameter / 2.0 + 0.5)
                         issues.Add("Монтажные отверстия " + (i + 1) + " и " + (j + 1) +
-                            ": недостаточный зазор.");
-                }
-                foreach (var component in _project.Components)
-                {
-                    double hw, hh;
-                    GetComponentHalfSize(component, out hw, out hh);
-                    if (Math.Abs(hole.X - component.X) < hw + radius + 0.5 &&
-                        Math.Abs(hole.Y - component.Y) < hh + radius + 0.5)
-                    {
-                        issues.Add("Монтажное отверстие " + (i + 1) +
-                            " слишком близко к компоненту " + component.Reference + ".");
-                    }
+                            ": недостаточный зазор 0,5 мм.");
                 }
             }
 
