@@ -128,7 +128,15 @@ namespace WpfApp1
                 DrawComponent(component);
 
             if (_placingComponent && _placementPreview != null)
+            {
+                // The floating preview is visual only: it must never become the
+                // mouse hit target. Otherwise clicks land on the preview instead
+                // of the board underneath it.
+                int previewVisualStart = BoardCanvas.Children.Count;
                 DrawComponent(_placementPreview);
+                for (int i = previewVisualStart; i < BoardCanvas.Children.Count; i++)
+                    BoardCanvas.Children[i].IsHitTestVisible = false;
+            }
 
             if (_trackStart.HasValue)
             {
