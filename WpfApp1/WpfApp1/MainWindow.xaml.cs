@@ -1059,11 +1059,19 @@ namespace WpfApp1
 
         private static void GetComponentHalfSize(PcbComponent component, out double halfWidth, out double halfHeight)
         {
-            halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 : component.Type == "TP" ? 1.2 : 1.7;
-            halfHeight = component.Type == "U" ? 2.1 : component.Type == "J" ? 1.6 : component.Type == "TP" ? 1.2 : 1.1;
+            // Bounding dimensions include the body and the outer edge of every pad.
+            // Values are expressed in millimetres and match DrawComponent/AddPad.
+            if (component.Type == "U") { halfWidth = 3.2; halfHeight = 2.1; }
+            else if (component.Type == "J") { halfWidth = 2.7; halfHeight = 1.6; }
+            else if (component.Type == "TP") { halfWidth = 1.2; halfHeight = 1.2; }
+            else if (component.Type == "Q") { halfWidth = 2.0; halfHeight = 1.4; }
+            else { halfWidth = 2.0; halfHeight = 1.1; }
+
             if (component.Rotation % 180 != 0)
             {
-                double temp = halfWidth; halfWidth = halfHeight; halfHeight = temp;
+                double temp = halfWidth;
+                halfWidth = halfHeight;
+                halfHeight = temp;
             }
         }
 
