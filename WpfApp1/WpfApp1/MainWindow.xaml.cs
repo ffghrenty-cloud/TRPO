@@ -294,15 +294,18 @@ namespace WpfApp1
             var item = ItemsControl.ContainerFromElement(LibraryList, e.OriginalSource as DependencyObject) as ListBoxItem;
             if (item == null) return;
 
-            // Selecting a library item should not start placement by itself.
-            // The user explicitly starts placement with the "Add component" button.
-            e.Handled = true;
             LibraryList.SelectedItem = item;
+            e.Handled = true;
+            BeginComponentPlacement(item);
         }
 
         private void AddComponent_Click(object sender, RoutedEventArgs e)
         {
-            var item = LibraryList.SelectedItem as ListBoxItem;
+            BeginComponentPlacement(LibraryList.SelectedItem as ListBoxItem);
+        }
+
+        private void BeginComponentPlacement(ListBoxItem item)
+        {
             string type = item == null ? "R" : Convert.ToString(item.Tag);
             string prefix = type == "TP" ? "TP" : type;
             int index = 1;
@@ -329,7 +332,7 @@ namespace WpfApp1
             Mouse.OverrideCursor = Cursors.Cross;
             RefreshSelection();
             RedrawBoard();
-            StatusText.Text = "Выбран " + _placementPreview.Reference + ". Щёлкните ЛКМ по плате, чтобы закрепить компонент в этой точке. R — поворот, Esc — отмена.";
+            StatusText.Text = "Выбран " + _placementPreview.Reference + ". Наведите курсор на плату и щёлкните ЛКМ, чтобы закрепить компонент. R — поворот, Esc — отмена.";
         }
 
         // Handle placement in the tunnelling phase. The canvas is redrawn on
