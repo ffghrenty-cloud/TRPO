@@ -705,9 +705,7 @@ namespace WpfApp1
             {
                 if (e.Key == Key.Space && _dragging && _selected != null)
                 {
-                    _selected.Rotation = (_selected.Rotation + 90) % 360;
-                    RedrawBoard();
-                    StatusText.Text = _selected.Reference + " повёрнут на 90°.";
+                    TryRotateSelected(90);
                 }
                 else FitBoard_Click(this, new RoutedEventArgs());
             }
@@ -726,10 +724,7 @@ namespace WpfApp1
                 }
                 else if (_selected != null)
                 {
-                    PushUndoSnapshot();
-                    _selected.Rotation = (_selected.Rotation + (shift ? 270 : 90)) % 360;
-                    RedrawBoard();
-                    StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
+                    TryRotateSelected(shift ? 270 : 90);
                 }
             }
             else if (!control && !textInputFocused && e.Key == Key.F1)
@@ -1059,10 +1054,7 @@ namespace WpfApp1
                 return;
             }
 
-            PushUndoSnapshot();
-            _selected.Rotation = (_selected.Rotation + 90) % 360;
-            RedrawBoard();
-            StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
+            TryRotateSelected(90);
         }
 
         private static void GetComponentHalfSize(PcbComponent component, out double halfWidth, out double halfHeight)
@@ -1077,60 +1069,148 @@ namespace WpfApp1
 
         private bool CanPlaceComponent(PcbComponent component, double x, double y, PcbComponent ignore, out string error)
         {
-            double hw, hh; GetComponentHalfSize(component, out hw, out hh);
-            const double clearance = 0.2;
-            if (x - hw < clearance || x + hw > 100 - clearance || y - hh < clearance || y + hh > 60 - clearance)
-            { error = "Компонент не помещается внутри платы с необходимым отступом."; return false; }
+            double hw, hh;
+            GetComponentHalfSize(component, out hw, out hh);
+            const double edgeClearance = 0.2;
+            if (x - hw < edgeClearance || x + hw > 100 - edgeClearance ||
+                y - hh < edgeClearance || y + hh > 60 - edgeClearance)
+            {
+                error = "Корпус компонента выходит за границы платы или не соблюдает отступ 0,2 мм.";
+                return false;
+            }
+
+            const double componentClearance = 0.2;
             foreach (var other in _project.Components)
             {
                 if (ReferenceEquals(other, ignore)) continue;
-                double ow, oh; GetComponentHalfSize(other, out ow, out oh);
-                if (Math.Abs(x - other.X) < hw + ow + clearance && Math.Abs(y - other.Y) < hh + oh + clearance)
-                { error = "Размещение невозможно: корпус пересекается с " + other.Reference + "."; return false; }
+                double otherHalfWidth, otherHalfHeight;
+                GetComponentHalfSize(other, out otherHalfWidth, out otherHalfHeight);
+                if (RectanglesOverlap(x, y, hw, hh, other.X, other.Y,
+                    otherHalfWidth, otherHalfHeight, componentClearance))
+                {
+                    error = "Размещение невозможно: корпус пересекается с " + other.Reference +
+                        " или нарушает зазор 0,2 мм.";
+                    return false;
+                }
             }
+
+            const double holeClearance = 0.5;
             foreach (var hole in _project.Holes ?? new List<PcbHole>())
             {
-                double r = Math.Max(1.0, hole.Diameter / 2.0) + 0.5;
-                if (Math.Abs(x - hole.X) < hw + r && Math.Abs(y - hole.Y) < hh + r)
-                { error = "Размещение невозможно: компонент слишком близко к монтажному отверстию."; return false; }
+                double radius = hole.Diameter / 2.0 + holeClearance;
+                if (CircleIntersectsRectangle(hole.X, hole.Y, radius, x, y, hw, hh))
+                {
+                    error = "Размещение невозможно: корпус слишком близко к монтажному отверстию.";
+                    return false;
+                }
             }
-            error = null; return true;
+            error = null;
+            return true;
         }
 
         private bool CanPlaceHole(double x, double y, double diameter, PcbHole ignore, out string error)
         {
-            double r = diameter / 2.0; const double clearance = 0.5;
-            if (x - r - clearance < 0 || x + r + clearance > 100 || y - r - clearance < 0 || y + r + clearance > 60)
-            { error = "Для отверстия не хватает отступа от края платы."; return false; }
+            double radius = diameter / 2.0;
+            const double clearance = 0.5;
+            if (x - radius - clearance < 0 || x + radius + clearance > 100 ||
+                y - radius - clearance < 0 || y + radius + clearance > 60)
+            {
+                error = "Для отверстия не хватает отступа 0,5 мм от края платы.";
+                return false;
+            }
+
             foreach (var hole in _project.Holes ?? new List<PcbHole>())
             {
                 if (ReferenceEquals(hole, ignore)) continue;
-                if (Distance(new Point(x, y), new Point(hole.X, hole.Y)) < r + hole.Diameter / 2.0 + clearance)
-                { error = "Монтажные отверстия расположены слишком близко друг к другу."; return false; }
+                if (Distance(new Point(x, y), new Point(hole.X, hole.Y)) <
+                    radius + hole.Diameter / 2.0 + clearance)
+                {
+                    error = "Монтажные отверстия расположены слишком близко друг к другу (минимальный зазор 0,5 мм).";
+                    return false;
+                }
             }
+
             foreach (var component in _project.Components)
             {
-                double hw, hh; GetComponentHalfSize(component, out hw, out hh);
-                if (Math.Abs(x - component.X) < hw + r + clearance && Math.Abs(y - component.Y) < hh + r + clearance)
-                { error = "Отверстие слишком близко к компоненту " + component.Reference + "."; return false; }
+                double hw, hh;
+                GetComponentHalfSize(component, out hw, out hh);
+                if (CircleIntersectsRectangle(x, y, radius + clearance,
+                    component.X, component.Y, hw, hh))
+                {
+                    error = "Отверстие слишком близко к компоненту " + component.Reference + ".";
+                    return false;
+                }
             }
-            error = null; return true;
+            error = null;
+            return true;
+        }
+
+        private static bool RectanglesOverlap(double ax, double ay, double ahw, double ahh,
+            double bx, double by, double bhw, double bhh, double clearance)
+        {
+            return Math.Abs(ax - bx) < ahw + bhw + clearance &&
+                   Math.Abs(ay - by) < ahh + bhh + clearance;
+        }
+
+        private static bool CircleIntersectsRectangle(double cx, double cy, double radius,
+            double rx, double ry, double halfWidth, double halfHeight)
+        {
+            double nearestX = Math.Max(rx - halfWidth, Math.Min(cx, rx + halfWidth));
+            double nearestY = Math.Max(ry - halfHeight, Math.Min(cy, ry + halfHeight));
+            double dx = cx - nearestX;
+            double dy = cy - nearestY;
+            return dx * dx + dy * dy < radius * radius;
+        }
+
+        private void TryRotateSelected(int angle)
+        {
+            if (_selected == null || !_project.Components.Contains(_selected)) return;
+            int oldRotation = _selected.Rotation;
+            int newRotation = (oldRotation + angle + 360) % 360;
+            _selected.Rotation = newRotation;
+            string error;
+            if (!CanPlaceComponent(_selected, _selected.X, _selected.Y, _selected, out error))
+            {
+                _selected.Rotation = oldRotation;
+                StatusText.Text = "Поворот отменён: " + error;
+                return;
+            }
+            PushUndoSnapshot();
+            // The snapshot must describe the state before rotation.
+            _selected.Rotation = oldRotation;
+            _selected.Rotation = newRotation;
+            RedrawBoard();
+            StatusText.Text = _selected.Reference + " повёрнут на " + _selected.Rotation + "°.";
         }
 
         private Point SnapComponentCenter(Point mm, PcbComponent component)
         {
-            double halfWidth = component.Type == "U" ? 2.9 : component.Type == "J" ? 2.4 : component.Type == "TP" ? 1.2 : 1.7;
-            double halfHeight = component.Type == "U" ? 2.1 : component.Type == "J" ? 1.6 : component.Type == "TP" ? 1.2 : 1.1;
-            if (component.Rotation % 180 != 0) { double temp = halfWidth; halfWidth = halfHeight; halfHeight = temp; }
-            double x = Math.Max(halfWidth, Math.Min(100 - halfWidth, mm.X));
-            double y = Math.Max(halfHeight, Math.Min(60 - halfHeight, mm.Y));
+            double halfWidth, halfHeight;
+            GetComponentHalfSize(component, out halfWidth, out halfHeight);
+            const double edgeClearance = 0.2;
+            double minX = halfWidth + edgeClearance;
+            double maxX = 100 - halfWidth - edgeClearance;
+            double minY = halfHeight + edgeClearance;
+            double maxY = 60 - halfHeight - edgeClearance;
+
+            double x = Math.Max(minX, Math.Min(maxX, mm.X));
+            double y = Math.Max(minY, Math.Min(maxY, mm.Y));
             if (SnapCheck != null && SnapCheck.IsChecked == true)
             {
-                double gridStep = _gridPresets[_gridPresetIndex];
-                x = Math.Round(x / gridStep) * gridStep;
-                y = Math.Round(y / gridStep) * gridStep;
+                double step = _gridPresets[_gridPresetIndex];
+                x = SnapAxisWithinBounds(x, minX, maxX, step);
+                y = SnapAxisWithinBounds(y, minY, maxY, step);
             }
             return new Point(x, y);
+        }
+
+        private static double SnapAxisWithinBounds(double value, double min, double max, double step)
+        {
+            double first = Math.Ceiling((min - 0.000001) / step) * step;
+            double last = Math.Floor((max + 0.000001) / step) * step;
+            if (first > last) return Math.Max(min, Math.Min(max, value));
+            double snapped = Math.Round(value / step) * step;
+            return Math.Max(first, Math.Min(last, snapped));
         }
 
         private static Point ToCanvas(PcbComponent component)
