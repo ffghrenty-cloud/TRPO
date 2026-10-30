@@ -45,6 +45,12 @@ namespace WpfApp1
         public MainWindow()
         {
             InitializeComponent();
+
+            // Listen even if a child visual or ScrollViewer marks the routed
+            // mouse event as handled before it reaches the Canvas handler.
+            BoardCanvas.AddHandler(UIElement.PreviewMouseLeftButtonDownEvent,
+                new MouseButtonEventHandler(BoardCanvas_PreviewMouseLeftButtonDown), true);
+
             _project.Name = "Новый проект";
             _project.Components = new List<PcbComponent>();
             _project.Tracks = new List<PcbTrack>();
@@ -345,6 +351,11 @@ namespace WpfApp1
             Point p = e.GetPosition(BoardCanvas);
             if (p.X < 0 || p.Y < 0 || p.X > BoardCanvas.ActualWidth || p.Y > BoardCanvas.ActualHeight)
                 return;
+
+            // Give clear feedback on every placement click. The event is
+            // registered with handledEventsToo=true in the window constructor.
+            if (_placingComponent && _placementPreview != null)
+                StatusText.Text = "Щелчок платы принят. Проверяю место для " + _placementPreview.Reference + "...";
 
             // Commit holes here rather than forwarding the same routed event.
             // This makes placement independent of the visual element hit on the board.
