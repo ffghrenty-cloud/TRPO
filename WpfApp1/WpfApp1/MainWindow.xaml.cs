@@ -31,6 +31,7 @@ namespace WpfApp1
         private PcbComponent _placementPreview;
         private bool _placingHole;
         private Point? _holePreviewPoint;
+        private double _holeDiameter = 3.2;
         private bool _showGrid = true;
         private Point? _trackStart;
         private Line _trackPreviewLine;
@@ -122,7 +123,7 @@ namespace WpfApp1
                 DrawHole(hole.X, hole.Y, hole.Diameter, false);
 
             if (_placingHole && _holePreviewPoint.HasValue)
-                DrawHole(_holePreviewPoint.Value.X, _holePreviewPoint.Value.Y, 3.2, true);
+                DrawHole(_holePreviewPoint.Value.X, _holePreviewPoint.Value.Y, _holeDiameter, true);
 
             foreach (var component in _project.Components)
                 DrawComponent(component);
@@ -210,8 +211,19 @@ namespace WpfApp1
             }
         }
 
+        private double GetSelectedHoleDiameter()
+        {
+            var item = HoleDiameterComboBox.SelectedItem as ComboBoxItem;
+            double diameter;
+            if (item != null && double.TryParse(Convert.ToString(item.Tag), System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture, out diameter) && diameter >= 0.3 && diameter <= 20.0)
+                return diameter;
+            return 3.2;
+        }
+
         private void AddMountingHole_Click(object sender, RoutedEventArgs e)
         {
+            _holeDiameter = GetSelectedHoleDiameter();
             _placingHole = true;
             _holePreviewPoint = null;
             _placingComponent = false;
@@ -219,11 +231,13 @@ namespace WpfApp1
             _trackMode = false;
             _trackStart = null;
             _selected = null;
+            _dragging = false;
+            BoardCanvas.CaptureMouse();
             BoardCanvas.Cursor = Cursors.Cross;
             Mouse.OverrideCursor = Cursors.Cross;
             RefreshSelection();
             RedrawBoard();
-            StatusText.Text = "Монтажное отверстие Ø3,2 мм: щёлкните внутри платы для установки; Esc — отмена.";
+            StatusText.Text = string.Format("Монтажное отверстие Ø{0:0.##} мм: щёлкните внутри платы для установки; Esc — отмена.", _holeDiameter);
         }
 
         private void DrawComponent(PcbComponent component)
@@ -379,10 +393,11 @@ namespace WpfApp1
                 }
 
                 Point mm = SnapPoint(ToMm(p));
-                mm.X = Math.Max(2.1, Math.Min(97.9, mm.X));
-                mm.Y = Math.Max(2.1, Math.Min(57.9, mm.Y));
+                double edgeMargin = _holeDiameter / 2.0 + 0.5;
+                mm.X = Math.Max(edgeMargin, Math.Min(100.0 - edgeMargin, mm.X));
+                mm.Y = Math.Max(edgeMargin, Math.Min(60.0 - edgeMargin, mm.Y));
                 string holeError;
-                if (!CanPlaceHole(mm.X, mm.Y, 3.2, null, out holeError))
+                if (!CanPlaceHole(mm.X, mm.Y, _holeDiameter, null, out holeError))
                 {
                     StatusText.Text = holeError;
                     e.Handled = true;
@@ -390,13 +405,14 @@ namespace WpfApp1
                 }
                 PushUndoSnapshot();
                 if (_project.Holes == null) _project.Holes = new List<PcbHole>();
-                _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = 3.2 });
+                _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = _holeDiameter });
                 _placingHole = false;
                 _holePreviewPoint = null;
+                BoardCanvas.ReleaseMouseCapture();
                 BoardCanvas.Cursor = Cursors.Arrow;
                 Mouse.OverrideCursor = null;
                 RedrawBoard();
-                StatusText.Text = string.Format("Монтажное отверстие Ø3,2 мм установлено: X {0:0.0}, Y {1:0.0} мм.", mm.X, mm.Y);
+                StatusText.Text = string.Format("Монтажное отверстие Ø{0:0.##} мм установлено: X {1:0.0}, Y {2:0.0} мм.", _holeDiameter, mm.X, mm.Y);
                 return;
             }
 
@@ -458,10 +474,11 @@ namespace WpfApp1
                     return;
                 }
                 Point mm = SnapPoint(ToMm(p));
-                mm.X = Math.Max(2.1, Math.Min(97.9, mm.X));
-                mm.Y = Math.Max(2.1, Math.Min(57.9, mm.Y));
+                double edgeMargin = _holeDiameter / 2.0 + 0.5;
+                mm.X = Math.Max(edgeMargin, Math.Min(100.0 - edgeMargin, mm.X));
+                mm.Y = Math.Max(edgeMargin, Math.Min(60.0 - edgeMargin, mm.Y));
                 string holeError;
-                if (!CanPlaceHole(mm.X, mm.Y, 3.2, null, out holeError))
+                if (!CanPlaceHole(mm.X, mm.Y, _holeDiameter, null, out holeError))
                 {
                     StatusText.Text = holeError;
                     e.Handled = true;
@@ -469,13 +486,14 @@ namespace WpfApp1
                 }
                 PushUndoSnapshot();
                 if (_project.Holes == null) _project.Holes = new List<PcbHole>();
-                _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = 3.2 });
+                _project.Holes.Add(new PcbHole { X = mm.X, Y = mm.Y, Diameter = _holeDiameter });
                 _placingHole = false;
                 _holePreviewPoint = null;
+                BoardCanvas.ReleaseMouseCapture();
                 BoardCanvas.Cursor = Cursors.Arrow;
                 Mouse.OverrideCursor = null;
                 RedrawBoard();
-                StatusText.Text = string.Format("Монтажное отверстие Ø3,2 мм установлено: X {0:0.0}, Y {1:0.0} мм.", mm.X, mm.Y);
+                StatusText.Text = string.Format("Монтажное отверстие Ø{0:0.##} мм установлено: X {1:0.0}, Y {2:0.0} мм.", _holeDiameter, mm.X, mm.Y);
                 e.Handled = true;
                 return;
             }
@@ -589,8 +607,9 @@ namespace WpfApp1
             if (_placingHole && IsInsideBoard(p))
             {
                 Point mm = SnapPoint(ToMm(p));
-                mm.X = Math.Max(2, Math.Min(98, mm.X));
-                mm.Y = Math.Max(2, Math.Min(58, mm.Y));
+                double edgeMargin = _holeDiameter / 2.0 + 0.5;
+                mm.X = Math.Max(edgeMargin, Math.Min(100.0 - edgeMargin, mm.X));
+                mm.Y = Math.Max(edgeMargin, Math.Min(60.0 - edgeMargin, mm.Y));
                 _holePreviewPoint = mm;
                 RedrawBoard();
             }
