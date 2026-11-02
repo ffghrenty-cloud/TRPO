@@ -22,6 +22,9 @@ namespace WpfApp1
         private readonly PcbProject _project = new PcbProject();
         private PcbComponent _selected;
         private bool _dragging;
+        private PcbHole _draggingHole;
+        private PcbTrack _draggingTrack;
+        private bool _draggingTrackStart;
         private bool _panning;
         private Point _panStart;
         private double _panHorizontalStart;
@@ -128,6 +131,18 @@ namespace WpfApp1
             foreach (var component in _project.Components)
                 DrawComponent(component);
 
+            // Show draggable endpoint handles while the Select tool is active.
+            if (!_trackMode && !_placingComponent && !_placingHole)
+            {
+                foreach (var track in _project.Tracks)
+                {
+                    bool layerVisible = track.Layer == "Bottom" ? IsChecked(BottomLayerCheck) : IsChecked(TopLayerCheck);
+                    if (!layerVisible) continue;
+                    DrawTrackHandle(track.X1, track.Y1);
+                    DrawTrackHandle(track.X2, track.Y2);
+                }
+            }
+
             if (_placingComponent && _placementPreview != null)
             {
                 // The floating preview is visual only: it must never become the
@@ -169,6 +184,24 @@ namespace WpfApp1
             var label = new TextBlock { Text = text, FontSize = size, FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(color), IsHitTestVisible = false };
             Canvas.SetLeft(label, x); Canvas.SetTop(label, y); BoardCanvas.Children.Add(label);
+        }
+
+        private void DrawTrackHandle(double xMm, double yMm)
+        {
+            const double size = 9;
+            double x = BoardLeft + xMm * PixelsPerMm;
+            double y = BoardTop + yMm * PixelsPerMm;
+            var handle = new Ellipse
+            {
+                Width = size, Height = size,
+                Fill = new SolidColorBrush(Color.FromRgb(245, 245, 245)),
+                Stroke = new SolidColorBrush(Color.FromRgb(28, 38, 52)),
+                StrokeThickness = 1.5,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(handle, x - size / 2);
+            Canvas.SetTop(handle, y - size / 2);
+            BoardCanvas.Children.Add(handle);
         }
 
         private void DrawHole(double xMm, double yMm, double diameterMm, bool preview)
@@ -577,6 +610,47 @@ namespace WpfApp1
                 return;
             }
 
+            // In Select mode, holes and track endpoints are draggable targets.
+            var holes = _project.Holes ?? new List<PcbHole>();
+            _draggingHole = holes
+                .OrderBy(h => Distance(p, new Point(BoardLeft + h.X * PixelsPerMm, BoardTop + h.Y * PixelsPerMm)))
+                .FirstOrDefault(h => Distance(p, new Point(BoardLeft + h.X * PixelsPerMm, BoardTop + h.Y * PixelsPerMm))
+                    <= Math.Max(10, h.Diameter * PixelsPerMm / 2.0 + 6));
+            if (_draggingHole != null)
+            {
+                PushUndoSnapshot();
+                _dragging = false;
+                _draggingTrack = null;
+                _selected = null;
+                BoardCanvas.CaptureMouse();
+                StatusText.Text = string.Format("Перемещение отверстия Ø{0:0.##} мм. Перетащите его в новое место.", _draggingHole.Diameter);
+                return;
+            }
+
+            var trackEndpoint = _project.Tracks
+                .Where(t => t.Layer == "Bottom" ? IsChecked(BottomLayerCheck) : IsChecked(TopLayerCheck))
+                .SelectMany(t => new[]
+                {
+                    new { Track = t, IsStart = true, Point = new Point(BoardLeft + t.X1 * PixelsPerMm, BoardTop + t.Y1 * PixelsPerMm) },
+                    new { Track = t, IsStart = false, Point = new Point(BoardLeft + t.X2 * PixelsPerMm, BoardTop + t.Y2 * PixelsPerMm) }
+                })
+                .OrderBy(endpoint => Distance(p, endpoint.Point))
+                .FirstOrDefault(endpoint => Distance(p, endpoint.Point) <= 11);
+            if (trackEndpoint != null)
+            {
+                PushUndoSnapshot();
+                _dragging = false;
+                _draggingHole = null;
+                _draggingTrack = trackEndpoint.Track;
+                _draggingTrackStart = trackEndpoint.IsStart;
+                _selected = null;
+                BoardCanvas.CaptureMouse();
+                StatusText.Text = "Перемещение точки дорожки. Перетащите точку в новое место.";
+                return;
+            }
+
+            _draggingHole = null;
+            _draggingTrack = null;
             var hit = _project.Components.OrderBy(c => Distance(p, ToCanvas(c))).FirstOrDefault(c => Distance(p, ToCanvas(c)) < HitRadius(c));
             _selected = hit;
             if (_selected != null)
@@ -621,6 +695,38 @@ namespace WpfApp1
                 RefreshSelection();
                 RedrawBoard();
             }
+            else if (_draggingHole != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
+            {
+                Point mm = SnapPoint(ToMm(p));
+                double margin = _draggingHole.Diameter / 2.0 + 0.5;
+                mm.X = Math.Max(margin, Math.Min(100.0 - margin, mm.X));
+                mm.Y = Math.Max(margin, Math.Min(60.0 - margin, mm.Y));
+                string holeError;
+                if (CanPlaceHole(mm.X, mm.Y, _draggingHole.Diameter, _draggingHole, out holeError))
+                {
+                    _draggingHole.X = mm.X;
+                    _draggingHole.Y = mm.Y;
+                    RedrawBoard();
+                }
+                else StatusText.Text = holeError;
+            }
+            else if (_draggingTrack != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
+            {
+                Point mm = SnapPoint(ToMm(p));
+                mm.X = Math.Max(0, Math.Min(100, mm.X));
+                mm.Y = Math.Max(0, Math.Min(60, mm.Y));
+                if (_draggingTrackStart)
+                {
+                    _draggingTrack.X1 = mm.X;
+                    _draggingTrack.Y1 = mm.Y;
+                }
+                else
+                {
+                    _draggingTrack.X2 = mm.X;
+                    _draggingTrack.Y2 = mm.Y;
+                }
+                RedrawBoard();
+            }
             else if (_dragging && _selected != null && e.LeftButton == MouseButtonState.Pressed && IsInsideBoard(p))
             {
                 Point mm = SnapComponentCenter(ToMm(p), _selected);
@@ -653,6 +759,8 @@ namespace WpfApp1
             // it can treat a release as a second placement attempt and reset
             // the cursor/mode unexpectedly when WPF changes the hit-tested child.
             _dragging = false;
+            _draggingHole = null;
+            _draggingTrack = null;
             if (!_placingComponent && !_placingHole)
                 BoardCanvas.ReleaseMouseCapture();
         }
@@ -824,6 +932,8 @@ namespace WpfApp1
                 _trackMode = false;
                 _trackStart = null;
                 _dragging = false;
+                _draggingHole = null;
+                _draggingTrack = null;
                 _placingComponent = false;
                 _placementPreview = null;
                 BoardCanvas.ReleaseMouseCapture();
@@ -1369,10 +1479,12 @@ namespace WpfApp1
         private void SelectMode_Click(object sender, RoutedEventArgs e)
         {
             _trackMode = false; _trackStart = null; _placingComponent = false; _placementPreview = null; _placingHole = false; _holePreviewPoint = null;
+            _dragging = false; _draggingHole = null; _draggingTrack = null;
+            BoardCanvas.ReleaseMouseCapture();
             BoardCanvas.Cursor = Cursors.Arrow;
             Mouse.OverrideCursor = null;
             RedrawBoard();
-            StatusText.Text = "Режим выбора: щёлкните и перетащите компонент.";
+            StatusText.Text = "Режим выбора: перетаскивайте компоненты, монтажные отверстия и круглые точки на концах дорожек.";
         }
 
         private void DeleteSelected_Click(object sender, RoutedEventArgs e)
