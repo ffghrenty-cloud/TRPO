@@ -57,7 +57,17 @@
                 <Button Content="━ Дорожка" Click="TrackMode_Click"/>
                 <Button Content="↖ Выбор" Click="SelectMode_Click"/>
                 <Button Content="↻ Повернуть" Click="RotateSelected_Click"/>
-                <Button Content="⊙ Монтажное отверстие" Click="AddMountingHole_Click" ToolTip="Добавить отверстие Ø3,2 мм (H)"/>
+                <Button Content="⊙ Монтажное отверстие" Click="AddMountingHole_Click" ToolTip="Выбрать диаметр и установить отверстие (H)"/>
+                <TextBlock Text="Ø:" VerticalAlignment="Center" Margin="5,0,2,0"/>
+                <ComboBox x:Name="HoleDiameterComboBox" Width="88" SelectedIndex="2" VerticalContentAlignment="Center" Margin="2" ToolTip="Диаметр монтажного отверстия">
+                    <ComboBoxItem Content="0,8 мм" Tag="0.8"/>
+                    <ComboBoxItem Content="1,0 мм" Tag="1.0"/>
+                    <ComboBoxItem Content="3,2 мм" Tag="3.2"/>
+                    <ComboBoxItem Content="3,5 мм" Tag="3.5"/>
+                    <ComboBoxItem Content="4,0 мм" Tag="4.0"/>
+                    <ComboBoxItem Content="5,0 мм" Tag="5.0"/>
+                    <ComboBoxItem Content="6,0 мм" Tag="6.0"/>
+                </ComboBox>
                 <Button Content="⌫ Удалить" Click="DeleteSelected_Click"/>
                 <TextBlock Text="Ширина:" VerticalAlignment="Center" Margin="8,0,2,0"/>
                 <ComboBox x:Name="TrackWidthComboBox" Width="74" SelectedIndex="1" VerticalContentAlignment="Center" Margin="2">
