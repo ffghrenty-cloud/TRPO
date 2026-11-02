@@ -341,7 +341,9 @@ namespace WpfApp1
             _trackStart = null;
             _dragging = false;
             _selected = _placementPreview;
-            BoardCanvas.ReleaseMouseCapture();
+            // Keep mouse input routed to the board while the preview follows the cursor.
+            // Without capture, WPF can target the floating component instead of the board.
+            BoardCanvas.CaptureMouse();
             BoardCanvas.Cursor = Cursors.Cross;
             Mouse.OverrideCursor = Cursors.Cross;
             RefreshSelection();
@@ -805,6 +807,7 @@ namespace WpfApp1
                 _dragging = false;
                 _placingComponent = false;
                 _placementPreview = null;
+                BoardCanvas.ReleaseMouseCapture();
                 _placingHole = false;
                 _holePreviewPoint = null;
                 _selected = _project.Components.Contains(_selected) ? _selected : null;
