@@ -94,13 +94,8 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <!-- Keep the offline help beside WpfApp1.exe. CHM is optional until published in Help & Manual. -->
+  <!-- Copy the compiled Help & Manual CHM file next to WpfApp1.exe. -->
   <ItemGroup>
-    <Content Include="Help\index.html">
-      <Link>Help\index.html</Link>
-      <TargetPath>Help\index.html</TargetPath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Help\PCBStudio.chm" Condition="Exists('Help\PCBStudio.chm')">
       <Link>PCBStudio.chm</Link>
       <TargetPath>PCBStudio.chm</TargetPath>
