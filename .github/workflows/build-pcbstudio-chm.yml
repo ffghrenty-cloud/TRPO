@@ -1,0 +1,44 @@
+name: Build PCB Studio CHM help
+
+on:
+  push:
+    paths:
+      - 'WpfApp1/WpfApp1/Help/**'
+      - '.github/workflows/build-pcbstudio-chm.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-chm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install CHM compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fp-utils-3.2.2
+          command -v chmcmd
+      - name: Compile and validate CHM
+        working-directory: WpfApp1/WpfApp1/Help
+        run: |
+          chmcmd --html-scan PCBStudio.hhp
+          test -s PCBStudio.chm
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("PCBStudio.chm")
+          assert p.read_bytes()[:4] == b"ITSF", "Invalid CHM signature"
+          print(f"Valid CHM: {p.stat().st_size} bytes")
+          PY
+      - name: Commit compiled help
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add WpfApp1/WpfApp1/Help/PCBStudio.chm
+          if git diff --cached --quiet; then
+            echo "CHM is already current"
+          else
+            git commit -m "Build PCB Studio CHM help"
+            git push
+          fi
