@@ -1,0 +1,13 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML><HEAD><meta charset="utf-8"></HEAD><BODY><UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="Руководство пользователя"><param name="Local" value="HTML/index.html"></OBJECT>
+<UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="1. Введение"><param name="Local" value="HTML/01-intro.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="2. Интерфейс программы"><param name="Local" value="HTML/02-interface.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="3. Создание проекта"><param name="Local" value="HTML/03-project.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="4. Работа с компонентами"><param name="Local" value="HTML/04-components.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="5. Работа с дорожками и отверстиями"><param name="Local" value="HTML/05-tracks-holes.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="6. Сохранение и экспорт"><param name="Local" value="HTML/06-save-export.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="7. Проверка платы"><param name="Local" value="HTML/07-drc.html"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="8. Горячие клавиши"><param name="Local" value="HTML/08-shortcuts.html"></OBJECT>
+</UL></UL></BODY></HTML>
