@@ -1766,18 +1766,17 @@ namespace WpfApp1
 
         private void Help_Click(object sender, RoutedEventArgs e)
         {
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string chmPath = System.IO.Path.Combine(baseDirectory, "PCBStudio.chm");
-            string htmlPath = System.IO.Path.Combine(baseDirectory, "Help", "index.html");
-
-            // Prefer the compiled Help & Manual CHM file when it is available.
-            string helpPath = File.Exists(chmPath) ? chmPath : htmlPath;
+            // The compiled Help & Manual CHM file must be placed next to WpfApp1.exe.
+            string helpPath = System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "PCBStudio.chm");
 
             if (!File.Exists(helpPath))
             {
                 MessageBox.Show(
-                    "Файлы справки не найдены.\n\n" +
-                    "Ожидается PCBStudio.chm рядом с WpfApp1.exe или Help\\index.html в папке приложения.",
+                    "Файл справки PCBStudio.chm не найден.\n\n" +
+                    "Скомпилируйте проект Help & Manual в формате CHM и поместите файл " +
+                    "PCBStudio.chm в папку Help проекта WpfApp1.",
                     "Справка PCB Studio",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -1795,7 +1794,7 @@ namespace WpfApp1
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Не удалось открыть справку.\n\n" + ex.Message,
+                    "Не удалось открыть файл справки.\n\n" + ex.Message,
                     "Ошибка справки",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
