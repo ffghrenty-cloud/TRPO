@@ -1767,7 +1767,7 @@ namespace WpfApp1
         private void Help_Click(object sender, RoutedEventArgs e)
         {
             // The compiled Help & Manual file is copied next to WpfApp1.exe.
-            string helpPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PCBStudio.chm");
+            string helpPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PCBStudio.chm");
 
             if (!File.Exists(helpPath))
             {
