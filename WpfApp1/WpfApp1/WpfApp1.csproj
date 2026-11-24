@@ -94,5 +94,13 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <!-- Copy the Help & Manual output next to WpfApp1.exe when it has been published. -->
+  <ItemGroup>
+    <Content Include="Help\PCBStudio.chm" Condition="Exists('Help\PCBStudio.chm')">
+      <Link>PCBStudio.chm</Link>
+      <TargetPath>PCBStudio.chm</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
