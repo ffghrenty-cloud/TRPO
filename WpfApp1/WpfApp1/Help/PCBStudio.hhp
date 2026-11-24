@@ -1,0 +1,25 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=PCBStudio.chm
+Contents file=PCBStudio.hhc
+Default topic=HTML/index.html
+Display compile progress=No
+Full-text search=Yes
+Language=0x419 Russian
+Title=PCB Studio — Руководство пользователя
+
+[WINDOWS]
+main="PCB Studio" "PCBStudio.hhc" "" "HTML/index.html" "" "" "" 260 180 900 650
+
+[FILES]
+PCBStudio.hhc
+HTML/index.html
+HTML/01-intro.html
+HTML/02-interface.html
+HTML/03-project.html
+HTML/04-components.html
+HTML/05-tracks-holes.html
+HTML/06-save-export.html
+HTML/07-drc.html
+HTML/08-shortcuts.html
+HTML/style.css
