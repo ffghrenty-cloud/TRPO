@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -878,7 +879,7 @@ namespace WpfApp1
                     TryRotateSelected(shift ? 270 : 90);
                 }
             }
-            else if (!control && !textInputFocused && e.Key == Key.F1)
+            else if (!control && e.Key == Key.F1)
                 Help_Click(this, new RoutedEventArgs());
             else if (!control && !textInputFocused && e.Key == Key.Tab && _placingComponent && _placementPreview != null)
             {
@@ -1765,21 +1766,37 @@ namespace WpfApp1
 
         private void Help_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("PCB Studio — справка по горячим клавишам\n\n" +
-                "Размещение и редактирование:\n" +
-                "• Выберите компонент слева, наведите курсор на плату и щёлкните ЛКМ один раз.\n" +
-                "• R — повернуть на 90°, Shift+R — повернуть на -90°. Esc — отмена действия.\n" +
-                "• H — режим монтажного отверстия Ø3,2 мм; щёлкните по плате для установки.\n" +
-                "• T — трассировка дорожки (два щелчка), V или S — выбор.\n" +
-                "• Delete — удалить; Ctrl+D — дублировать; Ctrl+C/X/V — копировать/вырезать/вставить.\n" +
-                "• Ctrl+Z / Ctrl+Y — отмена/повтор поддерживаемых изменений; стрелки — сдвиг компонента.\n\n" +
-                "Вид и сетка:\n" +
-                "• Колесо — прокрутка; Ctrl+колесо — масштаб; Shift+колесо — горизонтальная прокрутка; средняя кнопка — панорама.\n" +
-                "• F или Space — уместить плату; + / - — масштаб; G — сетка.\n" +
-                "• Shift+G — шаг сетки; Ctrl+G — привязка к сетке; C — поиск компонента.\n\n" +
-                "Файлы: Ctrl+N — новый; Ctrl+O — открыть; Ctrl+S — сохранить; Ctrl+E или Ctrl+P — экспорт SVG.\n\n" +
-                "Это учебный прототип. DRC и трассировка не заменяют профессиональную проверку PCB.",
-                "Справка PCB Studio", MessageBoxButton.OK, MessageBoxImage.Information);
+            // The compiled Help & Manual file is copied next to WpfApp1.exe.
+            string helpPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PCBStudio.chm");
+
+            if (!File.Exists(helpPath))
+            {
+                MessageBox.Show(
+                    "Файл справки не найден.\n\n" +
+                    "Поместите скомпилированный PCBStudio.chm в папку программы рядом с WpfApp1.exe.\n" +
+                    "Исходный проект справки находится в Help & Manual.",
+                    "Справка PCB Studio",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = helpPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Не удалось открыть файл справки.\n\n" + ex.Message,
+                    "Ошибка справки",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e) { Close(); }
