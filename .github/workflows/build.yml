@@ -7,28 +7,46 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-wpf:
+    name: Build WpfApp1 with CHM help
     runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
-      - name: Build .NET Framework 4.8 WPF project
+      - name: Build WpfApp1 (.NET Framework 4.8)
         run: msbuild WpfApp1/WpfApp1/WpfApp1.csproj /m /p:Configuration=Release /verbosity:minimal
-      - name: Build new standalone PCB Studio application
+      - name: Verify CHM was copied beside the executable
+        shell: pwsh
+        run: |
+          $exe = "WpfApp1/WpfApp1/bin/Release/WpfApp1.exe"
+          $chm = "WpfApp1/WpfApp1/bin/Release/PCBStudio.chm"
+          if (!(Test-Path $exe)) { throw "WpfApp1.exe was not produced." }
+          if (!(Test-Path $chm)) { throw "PCBStudio.chm was not copied beside WpfApp1.exe." }
+          Get-Item $exe, $chm | Select-Object Name, Length
+      - name: Upload WpfApp1 with help
+        uses: actions/upload-artifact@v4
+        with:
+          name: WpfApp1-with-CHM-help
+          path: WpfApp1/WpfApp1/bin/Release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  build-pcbstudio:
+    name: Build standalone PCBStudio project
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+      - name: Build PCBStudio
         run: msbuild PCBStudio/PCBStudio.csproj /m /p:Configuration=Release /verbosity:minimal
-      - name: Upload PCB Studio application
+      - name: Upload PCBStudio application
         uses: actions/upload-artifact@v4
         with:
           name: PCBStudio-Windows-build
           path: PCBStudio/bin/Release/*
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload legacy compiled application
-        uses: actions/upload-artifact@v4
-        with:
-          name: Altium-layout-Windows-build
-          path: WpfApp1/WpfApp1/bin/Release/*
           if-no-files-found: error
           retention-days: 14
