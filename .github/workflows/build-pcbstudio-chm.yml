@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'WpfApp1/WpfApp1/Help/**'
+      - '!WpfApp1/WpfApp1/Help/PCBStudio.chm'
       - '.github/workflows/build-pcbstudio-chm.yml'
   workflow_dispatch:
 
